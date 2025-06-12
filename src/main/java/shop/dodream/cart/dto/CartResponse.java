@@ -11,16 +11,16 @@ import java.util.List;
 @AllArgsConstructor
 public class CartResponse {
 	private Long cartId;
-	private String memberId;
-	private String sessionId;
+	private String userId;
+	private String guestId;
 	private List<CartItemResponse> items;
 	
 	
 	public static CartResponse of(Cart cart) {
 		return new CartResponse(
 				cart.getCartId(),
-				cart.getMemberId(),
-				cart.getSessionId(),
+				cart.getUserId(),
+				cart.getGuestId(),
 				new ArrayList<>()
 		);
 	}
@@ -28,8 +28,8 @@ public class CartResponse {
 	public static CartResponse of(Cart cart, List<CartItemResponse> items) {
 		return new CartResponse(
 				cart.getCartId(),
-				cart.getMemberId(),
-				cart.getSessionId(),
+				cart.getUserId(),
+				cart.getGuestId(),
 				items
 		);
 	}
