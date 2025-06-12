@@ -22,4 +22,6 @@ public class Cart {
 	private String memberId;
 	//비회원일 경우
 	private String sessionId;
+
 }
+
