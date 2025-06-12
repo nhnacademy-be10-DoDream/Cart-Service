@@ -100,12 +100,13 @@ public class CartService {
 		// 3. Redis 장바구니 아이템을 회원 장바구니로 병합
 		for (GuestCartItem guestItem : guestCart.getItems()) {
 			CartItem existing = cartItemRepository.findByCartIdAndBookId(memberCart.getCartId(), guestItem.getBookId());
+			BookDto book = bookClient.getBookById(guestItem.getBookId());
+			boolean isAvailable = BookAvailabilityChecker.isAvailable(book, guestItem.getQuantity());
 			if (existing != null) {
 				existing.setQuantity(existing.getQuantity() + guestItem.getQuantity());
+				existing.setAvailable(isAvailable);
 				cartItemRepository.save(existing);
 			} else {
-				BookDto book = bookClient.getBookById(guestItem.getBookId());
-				boolean isAvailable = BookAvailabilityChecker.isAvailable(book, guestItem.getQuantity());
 				
 				CartItem newItem = new CartItem();
 				newItem.setCartId(memberCart.getCartId());

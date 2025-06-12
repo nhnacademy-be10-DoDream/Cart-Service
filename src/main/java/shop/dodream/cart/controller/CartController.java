@@ -14,7 +14,6 @@ import shop.dodream.cart.service.CartService;
 import shop.dodream.cart.service.GuestCartService;
 import shop.dodream.cart.util.GuestIdUtil;
 
-import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor

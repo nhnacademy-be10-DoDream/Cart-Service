@@ -28,9 +28,6 @@ public class CartItemController {
 	// 장바구니에 아이템 추가
 	@PostMapping
 	public ResponseEntity<CartItemResponse> addCartItem(@RequestBody CartItemRequest request) {
-		if (request.getQuantity() == null || request.getQuantity() <= 0) {
-			throw new MissingIdentifierException("Quantity must be greater than zero");
-		}
 		CartItemResponse response = cartItemService.addCartItem(request);
 		if (!response.isAvailable()) {
 			throw new MissingIdentifierException("Book stock is insufficient");
