@@ -1,0 +1,13 @@
+package shop.dodream.cart.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class CartRequest {
+	private String memberId;
+	private String sessionId;
+}
