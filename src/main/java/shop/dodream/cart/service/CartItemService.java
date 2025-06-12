@@ -114,22 +114,4 @@ public class CartItemService {
 	public BookDto getBookByIdForItem(CartItem item) {
 		return bookClient.getBookById(item.getBookId());
 	}
-	
-	public void mergeCartItems(Long guestCartId, Long memberCartId) {
-		List<CartItem> guestItems = cartItemRepository.findByCartId(guestCartId);
-		
-		for (CartItem guestItem : guestItems) {
-			CartItem existingItem = cartItemRepository.findByCartIdAndBookId(memberCartId, guestItem.getBookId());
-			
-			if (existingItem != null) {
-				existingItem.setQuantity(existingItem.getQuantity() + guestItem.getQuantity());
-				cartItemRepository.save(existingItem);
-			} else {
-				guestItem.setCartId(memberCartId);
-				cartItemRepository.save(guestItem);
-			}
-		}
-		
-		cartItemRepository.deleteByCartId(guestCartId);
-	}
 }
