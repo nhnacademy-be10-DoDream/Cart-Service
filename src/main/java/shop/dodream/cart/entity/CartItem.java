@@ -33,5 +33,4 @@ public class CartItem {
 		this.cartId = cartId;
 		this.bookId = bookId;
 	}
-	
 }
