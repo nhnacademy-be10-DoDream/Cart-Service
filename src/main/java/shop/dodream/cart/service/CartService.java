@@ -5,13 +5,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import shop.dodream.cart.client.BookClient;
-import shop.dodream.cart.dto.CartItemResponse;
-import shop.dodream.cart.dto.CartResponse;
+import shop.dodream.cart.dto.*;
 import shop.dodream.cart.entity.Cart;
+import shop.dodream.cart.entity.CartItem;
 import shop.dodream.cart.exception.DataNotFoundException;
 import shop.dodream.cart.exception.MissingIdentifierException;
 import shop.dodream.cart.repository.CartItemRepository;
 import shop.dodream.cart.repository.CartRepository;
+import shop.dodream.cart.util.BookAvailabilityChecker;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,13 +23,14 @@ public class CartService {
 	
 	private final CartRepository cartRepository;
 	private final CartItemService cartItemService;
+	private final GuestCartService guestCartService;
 	private final CartItemRepository cartItemRepository;
 	private final BookClient bookClient;
 	
 	@Transactional
 	public CartResponse saveCart(String userId, String guestId) {
 		if (userId == null && !StringUtils.hasText(guestId)) {
-			throw new MissingIdentifierException("memberId or sessionId must be provided.");
+			throw new MissingIdentifierException("userId or guestId must be provided.");
 		}
 		Cart cart = new Cart();
 		cart.setUserId(userId);
@@ -37,9 +39,9 @@ public class CartService {
 	}
 	
 	@Transactional(readOnly = true)
-	public Optional<CartResponse> getCartByMemberId(String userId) {
+	public Optional<CartResponse> getCartByUserId(String userId) {
 		if (userId == null) {
-			throw new MissingIdentifierException("memberId must be provided.");
+			throw new MissingIdentifierException("userId must be provided.");
 		}
 		Optional<Cart> cartOpt = cartRepository.findByUserId(userId);
 		if (cartOpt.isEmpty()) {
@@ -51,7 +53,7 @@ public class CartService {
 	}
 	
 	@Transactional(readOnly = true)
-	public Optional<CartResponse> getCartBySessionId(String guestId) {
+	public Optional<CartResponse> getCartByGuestId(String guestId) {
 		if(!StringUtils.hasText(guestId)) {
 			throw new MissingIdentifierException("sessionId must be provided.");
 		}
@@ -77,27 +79,46 @@ public class CartService {
 	@Transactional
 	public void mergeCartOnLogin(String userId, String guestId) {
 		if (userId == null || !StringUtils.hasText(guestId)) {
-			throw new MissingIdentifierException("Both memberId and sessionId must be provided.");
-		}
-		Optional<Cart> guestCartOpt = cartRepository.findByGuestId(guestId);
-		Optional<Cart> memberCartOpt = cartRepository.findByUserId(userId);
-		
-		if (guestCartOpt.isEmpty()) {
-			// 비회원 장바구니 없으면 종료
-			return;
+			throw new MissingIdentifierException("Both userId and guestId must be provided.");
 		}
 		
-		Cart guestCart = guestCartOpt.get();
+		// 1. Redis에서 비회원 장바구니 가져오기
+		GuestCart guestCart = guestCartService.getRawCart(guestId);
+		if (guestCart == null || guestCart.getItems().isEmpty()) {
+			return; // 비회원 장바구니가 비어있으면 병합 불필요
+		}
 		
-		Cart memberCart = memberCartOpt.orElseGet(() -> {
-			// 회원 장바구니가 없으면 새로 생성
+		// 2. MySQL에서 회원 장바구니 조회 또는 생성
+		Cart memberCart = cartRepository.findByUserId(userId).orElseGet(() -> {
 			Cart newCart = new Cart();
 			newCart.setUserId(userId);
 			newCart.setGuestId(null);
 			return cartRepository.save(newCart);
 		});
-		cartItemService.mergeCartItems(guestCart.getCartId(), memberCart.getCartId());
 		
-		cartRepository.delete(guestCart);
+		
+		// 3. Redis 장바구니 아이템을 회원 장바구니로 병합
+		for (GuestCartItem guestItem : guestCart.getItems()) {
+			CartItem existing = cartItemRepository.findByCartIdAndBookId(memberCart.getCartId(), guestItem.getBookId());
+			BookDto book = bookClient.getBookById(guestItem.getBookId());
+			boolean isAvailable = BookAvailabilityChecker.isAvailable(book, guestItem.getQuantity());
+			if (existing != null) {
+				existing.setQuantity(existing.getQuantity() + guestItem.getQuantity());
+				existing.setAvailable(isAvailable);
+				cartItemRepository.save(existing);
+			} else {
+				
+				CartItem newItem = new CartItem();
+				newItem.setCartId(memberCart.getCartId());
+				newItem.setBookId(guestItem.getBookId());
+				newItem.setQuantity(guestItem.getQuantity());
+				newItem.setPrice(book.getDiscountPrice());
+				newItem.setAvailable(isAvailable);
+				cartItemRepository.save(newItem);
+			}
+		}
+		
+		// 4. Redis에서 비회원 장바구니 삭제
+		guestCartService.deleteCart(guestId);
 	}
 }

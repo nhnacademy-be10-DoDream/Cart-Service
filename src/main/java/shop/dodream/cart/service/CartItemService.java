@@ -1,5 +1,6 @@
 package shop.dodream.cart.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import shop.dodream.cart.client.BookClient;
@@ -29,7 +30,7 @@ public class CartItemService {
 		}).collect(Collectors.toList());
 	}
 	
-	
+	@Transactional
 	public CartItemResponse addCartItem(CartItemRequest request) {
 		CartItem existing = cartItemRepository.findByCartIdAndBookId(request.getCartId(), request.getBookId());
 		if (existing != null) {
@@ -53,7 +54,7 @@ public class CartItemService {
 		return CartItemResponse.of(saved, book);
 	}
 	
-	
+	@Transactional
 	public CartItemResponse updateCartItemQuantity(Long  cartItemId, Long quantity) {
 		CartItem item = cartItemRepository.findById(cartItemId)
 				                .orElseThrow(() -> new DataNotFoundException("CartItem not found"));
@@ -68,7 +69,7 @@ public class CartItemService {
 		return CartItemResponse.of(updated, book);
 	}
 	
-	
+	@Transactional
 	public void removeCartItem(Long cartItemId) {
 		if(!cartItemRepository.existsById(cartItemId)) {
 			throw new DataNotFoundException("CartItem not found");
@@ -76,7 +77,7 @@ public class CartItemService {
 		cartItemRepository.deleteById(cartItemId);
 	}
 	
-	
+	@Transactional
 	public void removeAllCartItems(Long cartId) {
 		List<CartItem> items = cartItemRepository.findByCartId(cartId);
 		if (items.isEmpty()) {
@@ -85,6 +86,7 @@ public class CartItemService {
 		cartItemRepository.deleteByCartId(cartId);
 	}
 	
+	@Transactional
 	public void removeCartItemsByBookId(Long cartId, Long bookId) {
 		CartItem item = cartItemRepository.findByCartIdAndBookId(cartId, bookId);
 		if (item == null) {
@@ -113,23 +115,5 @@ public class CartItemService {
 	
 	public BookDto getBookByIdForItem(CartItem item) {
 		return bookClient.getBookById(item.getBookId());
-	}
-	
-	public void mergeCartItems(Long guestCartId, Long memberCartId) {
-		List<CartItem> guestItems = cartItemRepository.findByCartId(guestCartId);
-		
-		for (CartItem guestItem : guestItems) {
-			CartItem existingItem = cartItemRepository.findByCartIdAndBookId(memberCartId, guestItem.getBookId());
-			
-			if (existingItem != null) {
-				existingItem.setQuantity(existingItem.getQuantity() + guestItem.getQuantity());
-				cartItemRepository.save(existingItem);
-			} else {
-				guestItem.setCartId(memberCartId);
-				cartItemRepository.save(guestItem);
-			}
-		}
-		
-		cartItemRepository.deleteByCartId(guestCartId);
 	}
 }
