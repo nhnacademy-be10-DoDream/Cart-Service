@@ -6,7 +6,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import shop.dodream.cart.dto.*;
 import shop.dodream.cart.entity.CartItem;
-import shop.dodream.cart.exception.MissingIdentifierException;
 import shop.dodream.cart.service.CartItemService;
 import shop.dodream.cart.service.GuestCartService;
 
