@@ -12,7 +12,6 @@ import shop.dodream.cart.exception.DataNotFoundException;
 import shop.dodream.cart.exception.MissingIdentifierException;
 import shop.dodream.cart.repository.CartItemRepository;
 import shop.dodream.cart.repository.CartRepository;
-import shop.dodream.cart.util.BookAvailabilityChecker;
 
 import java.util.List;
 import java.util.Optional;
@@ -55,7 +54,7 @@ public class CartService {
 	@Transactional(readOnly = true)
 	public Optional<CartResponse> getCartByGuestId(String guestId) {
 		if(!StringUtils.hasText(guestId)) {
-			throw new MissingIdentifierException("sessionId must be provided.");
+			throw new MissingIdentifierException("guestId must be provided.");
 		}
 		Optional<Cart> cartOpt = cartRepository.findByGuestId(guestId);
 		if (cartOpt.isEmpty()) {
@@ -101,10 +100,8 @@ public class CartService {
 		for (GuestCartItem guestItem : guestCart.getItems()) {
 			CartItem existing = cartItemRepository.findByCartIdAndBookId(memberCart.getCartId(), guestItem.getBookId());
 			BookDto book = bookClient.getBookById(guestItem.getBookId());
-			boolean isAvailable = BookAvailabilityChecker.isAvailable(book, guestItem.getQuantity());
 			if (existing != null) {
 				existing.setQuantity(existing.getQuantity() + guestItem.getQuantity());
-				existing.setAvailable(isAvailable);
 				cartItemRepository.save(existing);
 			} else {
 				
@@ -113,7 +110,6 @@ public class CartService {
 				newItem.setBookId(guestItem.getBookId());
 				newItem.setQuantity(guestItem.getQuantity());
 				newItem.setPrice(book.getDiscountPrice());
-				newItem.setAvailable(isAvailable);
 				cartItemRepository.save(newItem);
 			}
 		}

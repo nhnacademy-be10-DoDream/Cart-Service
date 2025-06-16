@@ -1,6 +1,6 @@
 package shop.dodream.cart.service;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import shop.dodream.cart.client.BookClient;
@@ -10,7 +10,6 @@ import shop.dodream.cart.dto.CartItemResponse;
 import shop.dodream.cart.entity.CartItem;
 import shop.dodream.cart.exception.DataNotFoundException;
 import shop.dodream.cart.repository.CartItemRepository;
-import shop.dodream.cart.util.BookAvailabilityChecker;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,11 +20,11 @@ public class CartItemService {
 	private final CartItemRepository cartItemRepository;
 	private final BookClient bookClient;
 	
-	
+	@Transactional(readOnly = true)
 	public List<CartItemResponse> getCartItems(Long cartId) {
 		List<CartItem> items = cartItemRepository.findByCartId(cartId);
 		return items.stream().map(item -> {
-			BookDto book = bookClient.getBookById(item.getBookId());
+			BookDto book = getBookByIdForItem(item);
 			return CartItemResponse.of(item, book);
 		}).collect(Collectors.toList());
 	}
@@ -36,19 +35,19 @@ public class CartItemService {
 		if (existing != null) {
 			existing.setQuantity(existing.getQuantity() + request.getQuantity());
 			CartItem updated = cartItemRepository.save(existing);
-			BookDto book = bookClient.getBookById(updated.getBookId());
+			BookDto book = getBookByIdForItem(updated);
 			return CartItemResponse.of(updated, book);
 		}
 		
-		BookDto book = bookClient.getBookById(request.getBookId());
-		boolean isAvailable = BookAvailabilityChecker.isAvailable(book, request.getQuantity());
-		
 		CartItem item = new CartItem();
 		item.setBookId(request.getBookId());
+		
+		BookDto book = getBookByIdForItem(item);
+		
+		
 		item.setCartId(request.getCartId());
 		item.setQuantity(request.getQuantity());
 		item.setPrice(book.getDiscountPrice());
-		item.setAvailable(isAvailable);
 		
 		CartItem saved = cartItemRepository.save(item);
 		return CartItemResponse.of(saved, book);
@@ -59,11 +58,9 @@ public class CartItemService {
 		CartItem item = cartItemRepository.findById(cartItemId)
 				                .orElseThrow(() -> new DataNotFoundException("CartItem not found"));
 		
-		BookDto book = bookClient.getBookById(item.getBookId());
-		boolean isAvailable = BookAvailabilityChecker.isAvailable(book, quantity);
+		BookDto book = getBookByIdForItem(item);
 		
 		item.setQuantity(quantity);
-		item.setAvailable(isAvailable);
 		item.setPrice(book.getDiscountPrice());
 		CartItem updated = cartItemRepository.save(item);
 		return CartItemResponse.of(updated, book);
@@ -95,15 +92,7 @@ public class CartItemService {
 		cartItemRepository.deleteByCartIdAndBookId(cartId, bookId);
 	}
 	
-	
-	public boolean validateOrderable(Long cartItemId) {
-		CartItem item = cartItemRepository.findById(cartItemId)
-				                .orElseThrow(() -> new DataNotFoundException("CartItem not found"));
-		BookDto book = bookClient.getBookById(item.getBookId());
-		return BookAvailabilityChecker.isAvailable(book, item.getQuantity());
-	}
-	
-	
+	@Transactional(readOnly = true)
 	public CartItem getCartItemByBookId(Long cartId, Long bookId) {
 		CartItem item = cartItemRepository.findByCartIdAndBookId(cartId, bookId);
 		if (item == null) {
@@ -112,7 +101,7 @@ public class CartItemService {
 		return cartItemRepository.findByCartIdAndBookId(cartId, bookId);
 	}
 	
-	
+	@Transactional(readOnly = true)
 	public BookDto getBookByIdForItem(CartItem item) {
 		return bookClient.getBookById(item.getBookId());
 	}

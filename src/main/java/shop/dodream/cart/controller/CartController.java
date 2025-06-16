@@ -14,6 +14,8 @@ import shop.dodream.cart.service.CartService;
 import shop.dodream.cart.service.GuestCartService;
 import shop.dodream.cart.util.GuestIdUtil;
 
+import java.util.Optional;
+
 
 @RestController
 @RequiredArgsConstructor
@@ -25,8 +27,8 @@ public class CartController {
 	private final GuestIdUtil guestIdUtil;
 	
 	
-	@GetMapping("/user/{userId}")
-	public ResponseEntity<CartResponse> getUserCart(@PathVariable String userId) {
+	@GetMapping("/user")
+	public ResponseEntity<CartResponse> getUserCart(@RequestHeader("X-USER-ID") String userId) {
 		return cartService.getCartByUserId(userId)
 				       .map(ResponseEntity::ok)
 				       .orElse(ResponseEntity.noContent().build()); // 204 No Content
@@ -38,6 +40,12 @@ public class CartController {
 		String guestId = guestIdUtil.getOrCreateGuestId(request, response);
 		GuestCartResponse cartResponse = guestCartService.getCart(guestId);
 		return ResponseEntity.ok(cartResponse);
+	}
+	
+	@GetMapping("/guest/{guestId}")
+	public ResponseEntity<CartResponse> getGuestCart(@PathVariable String guestId) {
+		Optional<CartResponse> cartResponse = cartService.getCartByGuestId(guestId);
+		return ResponseEntity.ok(cartResponse.isPresent() ? cartResponse.get() : null);
 	}
 	
 	@PostMapping
@@ -62,7 +70,7 @@ public class CartController {
 	}
 	
 	@PostMapping("/merge")
-	public ResponseEntity<Void> mergeCart(@RequestParam String userId,
+	public ResponseEntity<Void> mergeCart(@RequestHeader("X-USER-ID") String userId,
 	                                      HttpServletRequest request,
 	                                      HttpServletResponse response) {
 		String guestId = guestIdUtil.getOrCreateGuestId(request, response);

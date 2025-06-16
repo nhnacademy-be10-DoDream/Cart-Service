@@ -4,12 +4,12 @@ import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
+
 import shop.dodream.cart.util.GuestIdUtil;
 
 import java.io.IOException;
 
-@Component
+
 @RequiredArgsConstructor
 public class GuestIdFilter implements Filter {
 	
