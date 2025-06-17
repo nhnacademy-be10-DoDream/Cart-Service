@@ -39,10 +39,10 @@ class CartItemControllerTest {
 	private ObjectMapper objectMapper;
 	
 	@Test
-	void getCartItems_ShouldReturnListOfItems() throws Exception {
+	void getCartItemsReturnListOfItems() throws Exception {
 		Long cartId = 1L;
 		List<CartItemResponse> mockItems = List.of(
-				new CartItemResponse(1L, 10L, "Book A", 8000L, 2L, 30L)
+				new CartItemResponse(1L, 10L, "Book A", 8000L, 8000L, 2L,3L,"test")
 		);
 		
 		given(cartItemService.getCartItems(cartId)).willReturn(mockItems);
@@ -53,9 +53,9 @@ class CartItemControllerTest {
 	}
 	
 	@Test
-	void addCartItem_ShouldReturnCreatedItem() throws Exception {
+	void addCartItemReturnCreatedItem() throws Exception {
 		CartItemRequest request = new CartItemRequest(1L, 10L, 2L);
-		CartItemResponse response = new CartItemResponse(1L, 10L, "Book A", 8000L, 2L, 30L);
+		CartItemResponse response = new CartItemResponse(1L, 10L, "Book A", 8000L, 8000L, 2L,3L,"test");
 		
 		given(cartItemService.addCartItem(any(CartItemRequest.class))).willReturn(response);
 		
@@ -67,45 +67,49 @@ class CartItemControllerTest {
 	}
 	
 	@Test
-	void updateCartItemQuantity_ShouldReturnUpdatedItem() throws Exception {
+	void updateCartItemQuantityReturnUpdatedItem() throws Exception {
 		Long cartItemId = 1L;
-		Long quantity = 3L;
-		CartItemResponse response = new CartItemResponse(cartItemId, 10L, "Book A", 8000L, quantity, 30L);
+		Long quantity = 2L;
+		CartItemResponse response = new CartItemResponse(cartItemId, 10L, "Book A", 8000L, 8000L, 2L,3L,"test");
 		
 		given(cartItemService.updateCartItemQuantity(cartItemId, quantity)).willReturn(response);
 		
+		CartItemRequest request = new CartItemRequest(null, null, quantity);
+		String json = new ObjectMapper().writeValueAsString(request);
+		
 		mockMvc.perform(patch("/carts/{cartId}/cart-items/{cartItemId}/quantity", 1L, cartItemId)
-				                .param("quantity", quantity.toString()))
+				                .contentType(MediaType.APPLICATION_JSON)
+				                .content(json)) // 바디에 JSON 전달
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.quantity").value(quantity));
 	}
 	
 	@Test
-	void removeCartItem_ShouldReturnNoContent() throws Exception {
-		mockMvc.perform(delete("/carts/{cartId}/cart-items/{cartItemId}", 1L, 1L))
+	void removeCartItemReturnNoContent() throws Exception {
+		mockMvc.perform(delete("/cart-items/{cartItemId}", 1L, 1L))
 				.andExpect(status().isNoContent());
 	}
 	
 	@Test
-	void removeAllCartItems_ShouldReturnNoContent() throws Exception {
+	void removeAllCartItemsReturnNoContent() throws Exception {
 		mockMvc.perform(delete("/carts/{cartId}/cart-items", 1L))
 				.andExpect(status().isNoContent());
 	}
 	
 	@Test
-	void addGuestCartItem_ShouldReturnCreatedGuestCartResponse() throws Exception {
+	void addGuestCartItemReturnCreatedGuestCartResponse() throws Exception {
 		String guestId = "guest123";
 		GuestCartItemRequest request = new GuestCartItemRequest(10L, 1L);
 		
 		GuestCartItem guestItem = new GuestCartItem(10L, 1L);
-		BookDto book = new BookDto(10L, "Book A", 8000L, 30L);
+		BookDto book = new BookDto(10L, "Book A", 8000L, 8000L, 30L,"test");
 		GuestCartItemResponse guestResponse = GuestCartItemResponse.of(guestItem, book);
 		
 		GuestCartResponse response = new GuestCartResponse(guestId, List.of(guestResponse));
 		
 		given(guestCartService.addCartItem(eq(guestId), any(GuestCartItemRequest.class))).willReturn(response);
 		
-		mockMvc.perform(post("/carts/guest/{guestId}/cart-items", guestId)
+		mockMvc.perform(post("/carts/guests/{guestId}/cart-items", guestId)
 				                .contentType(MediaType.APPLICATION_JSON)
 				                .content(objectMapper.writeValueAsString(request)))
 				.andExpect(status().isCreated())
@@ -113,14 +117,21 @@ class CartItemControllerTest {
 				.andExpect(jsonPath("$.items[0].title").value("Book A"));
 	}
 	
+	
 	@Test
-	void removeCartItemsByBookId_ShouldReturnNoContent() throws Exception {
-		mockMvc.perform(delete("/carts/{cartId}/book/{bookId}", 1L, 10L))
+	void removeCartItemsByBookIdReturnNoContent() throws Exception {
+		mockMvc.perform(delete("/carts/{cartId}/cart-items/books/{bookId}", 1L, 10L))
 				.andExpect(status().isNoContent());
 	}
 	
 	@Test
-	void getCartItemByBookId_ShouldReturnItem() throws Exception {
+	void removeGuestCartItemReturnNoContent() throws Exception {
+		mockMvc.perform(delete("/carts/guests/{guestId}/cart-items/books/{bookId}", "guest123", 10L))
+				.andExpect(status().isNoContent());
+	}
+	
+	@Test
+	void getCartItemByBookIdReturnItem() throws Exception {
 		Long cartId = 1L;
 		Long bookId = 10L;
 		
@@ -129,16 +140,40 @@ class CartItemControllerTest {
 		item.setCartId(cartId);
 		item.setBookId(bookId);
 		item.setQuantity(2L);
-		item.setPrice(8000L);
+		item.setOriginalPrice(8000L);
+		item.setDiscountPrice(8000L);
 		
-		BookDto book = new BookDto(bookId, "Book A", 8000L, 30L);
+		BookDto book = new BookDto(bookId, "Book A", 8000L, 8000L, 30L,"test");
 		
 		given(cartItemService.getCartItemByBookId(cartId, bookId)).willReturn(item);
 		given(cartItemService.getBookByIdForItem(item)).willReturn(book);
 		
-		mockMvc.perform(get("/carts/{cartId}/book/{bookId}", cartId, bookId))
+		mockMvc.perform(get("/carts/{cartId}/cart-items/books/{bookId}", cartId, bookId))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.bookTitle").value("Book A"))
 				.andExpect(jsonPath("$.quantity").value(2L));
+	}
+	
+	@Test
+	void getCartItemReturnItem() throws Exception {
+		Long cartItemId = 1L;
+		
+		CartItem item = new CartItem();
+		item.setCartItemId(cartItemId);
+		item.setCartId(1L);
+		item.setBookId(10L);
+		item.setQuantity(2L);
+		item.setOriginalPrice(8000L);
+		item.setDiscountPrice(8000L);
+		
+		BookDto book = new BookDto(10L, "Book A", 8000L, 8000L, 30L,"test");
+		
+		given(cartItemService.getCartItemById(cartItemId)).willReturn(item);
+		given(cartItemService.getBookByIdForItem(item)).willReturn(book);
+		
+		mockMvc.perform(get("/cart-items/{cartItemId}", cartItemId))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.bookTitle").value("Book A"))
+				.andExpect(jsonPath("$.quantity").value(2));
 	}
 }

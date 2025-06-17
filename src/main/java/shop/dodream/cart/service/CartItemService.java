@@ -4,14 +4,15 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import shop.dodream.cart.client.BookClient;
-import shop.dodream.cart.dto.BookDto;
-import shop.dodream.cart.dto.CartItemRequest;
-import shop.dodream.cart.dto.CartItemResponse;
+import shop.dodream.cart.dto.*;
+import shop.dodream.cart.entity.Cart;
 import shop.dodream.cart.entity.CartItem;
 import shop.dodream.cart.exception.DataNotFoundException;
 import shop.dodream.cart.repository.CartItemRepository;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,11 +24,28 @@ public class CartItemService {
 	@Transactional(readOnly = true)
 	public List<CartItemResponse> getCartItems(Long cartId) {
 		List<CartItem> items = cartItemRepository.findByCartId(cartId);
-		return items.stream().map(item -> {
-			BookDto book = getBookByIdForItem(item);
-			return CartItemResponse.of(item, book);
-		}).collect(Collectors.toList());
+		
+		List<Long> bookIds = items.stream()
+				                     .map(CartItem::getBookId)
+				                     .distinct()
+				                     .toList();
+		
+		List<BookDto> books = bookClient.getBooksByIds(bookIds);
+		
+		Map<Long, BookDto> bookMap = books.stream()
+				                             .collect(Collectors.toMap(BookDto::getId, Function.identity()));
+		
+		return items.stream()
+				       .map(item -> {
+					       BookDto book = bookMap.get(item.getBookId());
+					       if (book == null) {
+						       throw new DataNotFoundException("도서 정보를 찾을 수 없습니다: id=" + item.getBookId());
+					       }
+					       return CartItemResponse.of(item, book);
+				       })
+				       .toList();
 	}
+	
 	
 	@Transactional
 	public CartItemResponse addCartItem(CartItemRequest request) {
@@ -47,7 +65,8 @@ public class CartItemService {
 		
 		item.setCartId(request.getCartId());
 		item.setQuantity(request.getQuantity());
-		item.setPrice(book.getDiscountPrice());
+		item.setDiscountPrice(book.getDiscountPrice());
+		item.setOriginalPrice(book.getOriginalPrice());
 		
 		CartItem saved = cartItemRepository.save(item);
 		return CartItemResponse.of(saved, book);
@@ -61,7 +80,8 @@ public class CartItemService {
 		BookDto book = getBookByIdForItem(item);
 		
 		item.setQuantity(quantity);
-		item.setPrice(book.getDiscountPrice());
+		item.setDiscountPrice(book.getDiscountPrice());
+		item.setOriginalPrice(book.getOriginalPrice());
 		CartItem updated = cartItemRepository.save(item);
 		return CartItemResponse.of(updated, book);
 	}
@@ -98,10 +118,48 @@ public class CartItemService {
 		if (item == null) {
 			throw new DataNotFoundException("CartItem not found for cartId " + cartId + " and bookId " + bookId);
 		}
-		return cartItemRepository.findByCartIdAndBookId(cartId, bookId);
+		return item;
 	}
 	
-	@Transactional(readOnly = true)
+	public void mergeGuestItemsIntoMemberCart(List<GuestCartItem> guestItems, Cart memberCart) {
+		// 1. 일괄 Book 조회
+		List<Long> bookIds = guestItems.stream()
+				                     .map(GuestCartItem::getBookId)
+				                     .distinct()
+				                     .collect(Collectors.toList());
+		
+		List<BookDto> books = bookClient.getBooksByIds(bookIds);
+		Map<Long, BookDto> bookMap = books.stream()
+				                             .collect(Collectors.toMap(BookDto::getId, Function.identity()));
+		
+		// 2. 병합
+		for (GuestCartItem guestItem : guestItems) {
+			Long bookId = guestItem.getBookId();
+			BookDto book = bookMap.get(bookId);
+			if (book == null) {
+				throw new DataNotFoundException("Book not found for ID: " + bookId);
+			}
+			
+			CartItem existing = cartItemRepository.findByCartIdAndBookId(memberCart.getCartId(), bookId);
+			if (existing != null) {
+				existing.setQuantity(existing.getQuantity() + guestItem.getQuantity());
+				cartItemRepository.save(existing);
+			} else {
+				CartItem newItem = new CartItem();
+				newItem.setCartId(memberCart.getCartId());
+				newItem.setBookId(bookId);
+				newItem.setQuantity(guestItem.getQuantity());
+				newItem.setOriginalPrice(book.getOriginalPrice());
+				newItem.setDiscountPrice(book.getDiscountPrice());
+				cartItemRepository.save(newItem);
+			}
+		}
+	}
+	
+	public CartItem getCartItemById(Long cartItemId) {
+		return cartItemRepository.findById(cartItemId).orElseThrow(() -> new DataNotFoundException("CartItem not found"));
+	}
+	
 	public BookDto getBookByIdForItem(CartItem item) {
 		return bookClient.getBookById(item.getBookId());
 	}

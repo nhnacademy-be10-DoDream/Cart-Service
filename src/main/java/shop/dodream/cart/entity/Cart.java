@@ -21,4 +21,9 @@ public class Cart {
 	private String userId;
 	//비회원일 경우
 	private String guestId;
+	
+	public Cart(String userId, Object o) {
+		this.userId = userId;
+		this.guestId = (String) o;
+	}
 }
