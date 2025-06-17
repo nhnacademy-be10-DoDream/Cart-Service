@@ -31,4 +31,6 @@ public class CartItem {
 	private Long discountPrice;
 	//정가
 	private Long originalPrice;
+
 }
+
