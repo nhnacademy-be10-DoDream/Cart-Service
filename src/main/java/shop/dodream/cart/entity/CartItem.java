@@ -31,10 +31,4 @@ public class CartItem {
 	private Long discountPrice;
 	//정가
 	private Long originalPrice;
-
-	
-	public CartItem(Long cartId, Long bookId) {
-		this.cartId = cartId;
-		this.bookId = bookId;
-	}
 }

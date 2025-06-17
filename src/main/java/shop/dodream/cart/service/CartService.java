@@ -22,8 +22,6 @@ public class CartService {
 	private final CartRepository cartRepository;
 	private final CartItemService cartItemService;
 	private final GuestCartService guestCartService;
-	private final CartItemRepository cartItemRepository;
-	private final BookClient bookClient;
 	
 	@Transactional
 	public CartResponse saveCart(String userId, String guestId) {

@@ -10,7 +10,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import shop.dodream.cart.dto.CartRequest;
 import shop.dodream.cart.dto.CartResponse;
 import shop.dodream.cart.dto.GuestCartResponse;
 import shop.dodream.cart.service.CartService;
@@ -98,7 +97,6 @@ class CartControllerTest {
 	
 	@Test
 	void createCartReturnCreatedCart() throws Exception {
-		CartRequest request = new CartRequest(userId, null);
 		CartResponse response = new CartResponse(10L, userId, null, List.of());
 		
 		when(cartService.saveCart(userId, null)).thenReturn(response);
