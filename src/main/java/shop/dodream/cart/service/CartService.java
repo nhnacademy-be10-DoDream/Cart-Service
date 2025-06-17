@@ -4,12 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import shop.dodream.cart.client.BookClient;
 import shop.dodream.cart.dto.*;
 import shop.dodream.cart.entity.Cart;
 import shop.dodream.cart.exception.DataNotFoundException;
 import shop.dodream.cart.exception.MissingIdentifierException;
-import shop.dodream.cart.repository.CartItemRepository;
 import shop.dodream.cart.repository.CartRepository;
 
 import java.util.List;
