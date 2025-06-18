@@ -56,7 +56,7 @@ class GuestCartServiceTest {
 	void getCartReturnMappedItemResponse() {
 		GuestCartItem cartItem = new GuestCartItem(1L, 2L);
 		GuestCart guestCart = new GuestCart(guestId, List.of(cartItem));
-		BookDto bookDto = new BookDto(1L, "Test Book", 900L, 10L);
+		BookDto bookDto = new BookDto(1L, "Test Book", 900L, 3000L,10L,"test");
 		
 		when(valueOperations.get(redisKey)).thenReturn(guestCart);
 		when(bookClient.getBookById(1L)).thenReturn(bookDto);
@@ -69,13 +69,15 @@ class GuestCartServiceTest {
 		assertEquals("Test Book", item.getTitle());
 		assertEquals(2L, item.getQuantity());
 		assertEquals(10L, item.getStockQuantity());
-		assertEquals(900L, item.getPrice());
+		assertEquals(900L, item.getOriginalPrice());
+		assertEquals(3000L, item.getDiscountPrice());
+		assertEquals("test", item.getImageUrl());
 	}
 	
 	@Test
 	void addCartItemCreateNewCartIfNotExists() {
 		GuestCartItemRequest request = new GuestCartItemRequest(1L, 2L);
-		BookDto bookDto = new BookDto(1L, "New Book", 800L, 5L);
+		BookDto bookDto = new BookDto(1L, "New Book", 800L,800L, 5L,"test");
 		
 		when(valueOperations.get(redisKey))
 				.thenReturn(null)
@@ -103,7 +105,7 @@ class GuestCartServiceTest {
 		GuestCartItem existingItem = new GuestCartItem(1L, 2L);
 		GuestCart existingCart = new GuestCart(guestId, new ArrayList<>(List.of(existingItem)));
 		GuestCartItemRequest request = new GuestCartItemRequest(1L, 3L);
-		BookDto bookDto = new BookDto(1L, "Same Book", 700L, 15L);
+		BookDto bookDto = new BookDto(1L, "Same Book", 700L,700L ,15L,"test");
 		
 		when(valueOperations.get(redisKey)).thenReturn(existingCart);
 		when(bookClient.getBookById(1L)).thenReturn(bookDto);
@@ -114,6 +116,23 @@ class GuestCartServiceTest {
 		assertEquals(1, response.getItems().size());
 		assertEquals(5L, response.getItems().get(0).getQuantity());
 		assertEquals("Same Book", response.getItems().get(0).getTitle());
+	}
+	
+	@Test
+	void removeItem_removesBookFromCart() {
+		Long bookIdToRemove = 1L;
+		GuestCartItem itemToRemove = new GuestCartItem(bookIdToRemove, 2L);
+		GuestCartItem remainingItem = new GuestCartItem(2L, 1L);
+		GuestCart cart = new GuestCart(guestId, new ArrayList<>(List.of(itemToRemove, remainingItem)));
+		
+		when(valueOperations.get(redisKey)).thenReturn(cart);
+		
+		guestCartService.removeItem(guestId, bookIdToRemove);
+		
+		assertEquals(1, cart.getItems().size());
+		assertEquals(2L, cart.getItems().get(0).getBookId());
+		
+		verify(valueOperations).set(eq(redisKey), eq(cart), eq(Duration.ofDays(7)));
 	}
 	
 	@MockitoSettings(strictness = Strictness.LENIENT)

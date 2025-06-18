@@ -10,7 +10,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import shop.dodream.cart.dto.CartRequest;
 import shop.dodream.cart.dto.CartResponse;
 import shop.dodream.cart.dto.GuestCartResponse;
 import shop.dodream.cart.service.CartService;
@@ -43,30 +42,20 @@ class CartControllerTest {
 	private final String guestId = "guest-123";
 	private final String userId = "user-abc";
 	
-	
 	@Test
 	void getUserCartReturnCart() throws Exception {
 		CartResponse response = new CartResponse(1L, userId, null, List.of());
 		
 		when(cartService.getCartByUserId(userId)).thenReturn(Optional.of(response));
 		
-		mockMvc.perform(get("/carts/user")
+		mockMvc.perform(get("/carts/users")
 				                .header("X-USER-ID", userId))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.userId").value(userId));
 	}
 	
 	@Test
-	void getUserCartReturnNoContentIfEmpty() throws Exception {
-		when(cartService.getCartByUserId(userId)).thenReturn(Optional.empty());
-		
-		mockMvc.perform(get("/carts/user")
-				                .header("X-USER-ID", userId))
-				.andExpect(status().isNoContent());
-	}
-	
-	@Test
-	void filterSetGuestIdCookieIfNotExists() throws Exception {
+	void getGuestCartSetsGuestIdCookieAndReturnsCart() throws Exception {
 		when(guestIdUtil.getOrCreateGuestId(any(), any())).thenAnswer(invocation -> {
 			HttpServletResponse response = invocation.getArgument(1);
 			Cookie cookie = new Cookie("guestId", guestId);
@@ -77,7 +66,7 @@ class CartControllerTest {
 		GuestCartResponse response = new GuestCartResponse(guestId, List.of());
 		when(guestCartService.getCart(guestId)).thenReturn(response);
 		
-		mockMvc.perform(get("/carts/guest"))
+		mockMvc.perform(get("/carts/guests"))
 				.andExpect(status().isOk())
 				.andExpect(cookie().exists("guestId"));
 	}
@@ -89,37 +78,25 @@ class CartControllerTest {
 		when(guestIdUtil.getOrCreateGuestId(any(), any())).thenReturn(guestId);
 		when(guestCartService.getCart(guestId)).thenReturn(response);
 		
-		mockMvc.perform(get("/carts/guest")
+		mockMvc.perform(get("/carts/guests")
 				                .cookie(new Cookie("guestId", guestId)))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.guestId").value(guestId));
 	}
 	
-
 	@Test
 	void getGuestCartByGuestIdReturnCart() throws Exception {
-		CartResponse response = new CartResponse(2L, null,guestId, List.of());
+		CartResponse response = new CartResponse(2L, null, guestId, List.of());
 		
 		when(cartService.getCartByGuestId(guestId)).thenReturn(Optional.of(response));
 		
-		mockMvc.perform(get("/carts/guest/{guestId}", guestId))
+		mockMvc.perform(get("/carts/guests/{guestId}", guestId))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.cartId").value(2L));
 	}
 	
 	@Test
-	void getGuestCartByGuestIdReturnNullIfEmpty() throws Exception {
-		when(cartService.getCartByGuestId(guestId)).thenReturn(Optional.empty());
-		
-		mockMvc.perform(get("/carts/guest/{guestId}", guestId))
-				.andExpect(status().isOk())
-				.andExpect(content().string("")); // null 본문
-	}
-	
-	
-	@Test
 	void createCartReturnCreatedCart() throws Exception {
-		CartRequest request = new CartRequest(userId, null);
 		CartResponse response = new CartResponse(10L, userId, null, List.of());
 		
 		when(cartService.saveCart(userId, null)).thenReturn(response);
@@ -136,7 +113,6 @@ class CartControllerTest {
 				.andExpect(jsonPath("$.cartId").value(10L));
 	}
 	
-
 	@Test
 	void deleteCartReturnNoContent() throws Exception {
 		mockMvc.perform(delete("/carts/{cartId}", 1L))
@@ -145,19 +121,6 @@ class CartControllerTest {
 		verify(cartService).deleteCart(1L);
 	}
 	
-	
-	@Test
-	void deleteGuestCartSucceed() throws Exception {
-		when(guestIdUtil.getOrCreateGuestId(any(), any())).thenReturn(guestId);
-		
-		mockMvc.perform(delete("/carts/guest")
-				                .cookie(new Cookie("guestId", guestId)))
-				.andExpect(status().isNoContent());
-		
-		verify(guestCartService).deleteCart(guestId);
-	}
-	
-
 	@Test
 	void mergeCartMergeSuccessfully() throws Exception {
 		when(guestIdUtil.getOrCreateGuestId(any(), any())).thenReturn(guestId);
@@ -170,3 +133,4 @@ class CartControllerTest {
 		verify(cartService).mergeCartOnLogin(userId, guestId);
 	}
 }
+

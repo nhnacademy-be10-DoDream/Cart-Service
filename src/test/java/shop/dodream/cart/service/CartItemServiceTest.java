@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.when;
 
 
 @SpringBootTest
@@ -41,7 +42,7 @@ class CartItemServiceTest {
 	
 	@BeforeEach
 	void setup() {
-		BookDto mockBook = new BookDto(bookId,"testbook",3000L,10L);
+		BookDto mockBook = new BookDto(bookId,"testbook",3000L,3000L,10L,"test");
 		given(bookClient.getBookById(anyLong())).willReturn(mockBook);
 	}
 	
@@ -56,7 +57,7 @@ class CartItemServiceTest {
 	
 	@Test
 	void testAddCartItem2() {
-		cartItemRepository.save(new CartItem(1L,3L,bookId,cartId,3000L));
+		cartItemRepository.save(new CartItem(1L,3L,bookId,cartId,3000L, 3000L));
 		
 		CartItemRequest request = new CartItemRequest(cartId, bookId, 2L);
 		CartItemResponse response = cartItemService.addCartItem(request);
@@ -66,8 +67,10 @@ class CartItemServiceTest {
 	
 	@Test
 	void testGetCartItems() {
-		cartItemRepository.save(new CartItem(1L,3L,bookId,cartId,3000L));
+		BookDto bookDto = new BookDto(bookId,"testbook",3000L,3000L,10L,"test");
+		cartItemRepository.save(new CartItem(1L,3L,bookId,cartId,3000L, 3000L));
 		
+		when(bookClient.getBooksByIds(List.of(bookId))).thenReturn(List.of(bookDto));
 		List<CartItemResponse> items = cartItemService.getCartItems(cartId);
 		
 		assertThat(items).hasSize(1);
@@ -76,7 +79,7 @@ class CartItemServiceTest {
 	
 	@Test
 	void testUpdateCartItemQuantity() {
-		CartItem saved = cartItemRepository.save(new CartItem(1L,3L,bookId,cartId,3000L));
+		CartItem saved = cartItemRepository.save(new CartItem(1L,3L,bookId,cartId,3000L, 3000L));
 		
 		CartItemResponse response = cartItemService.updateCartItemQuantity(saved.getCartItemId(), 5L);
 		
@@ -85,7 +88,7 @@ class CartItemServiceTest {
 	
 	@Test
 	void testRemoveCartItem() {
-		CartItem saved = cartItemRepository.save(new CartItem(1L,3L,bookId,cartId,3000L));
+		CartItem saved = cartItemRepository.save(new CartItem(1L,3L,bookId,cartId,3000L, 3000L));
 		
 		cartItemService.removeCartItem(saved.getCartItemId());
 		
@@ -100,7 +103,7 @@ class CartItemServiceTest {
 	
 	@Test
 	void testRemoveAllCartItems() {
-		cartItemRepository.save(new CartItem(1L,3L,bookId,cartId,3000L));
+		cartItemRepository.save(new CartItem(1L,3L,bookId,cartId,3000L, 3000L));
 		cartItemService.removeAllCartItems(cartId);
 		
 		assertThat(cartItemRepository.findByCartId(cartId)).isEmpty();
@@ -114,7 +117,7 @@ class CartItemServiceTest {
 	
 	@Test
 	void testRemoveCartItemsByBookId() {
-		cartItemRepository.save(new CartItem(1L,3L,bookId,cartId,3000L));
+		cartItemRepository.save(new CartItem(1L,3L,bookId,cartId,3000L, 3000L));
 		cartItemService.removeCartItemsByBookId(cartId, bookId);
 		
 		assertThat(cartItemRepository.findByCartIdAndBookId(cartId, bookId)).isNull();
@@ -128,7 +131,7 @@ class CartItemServiceTest {
 	
 	@Test
 	void testGetCartItemByBookId() {
-		cartItemRepository.save(new CartItem(1L,3L,bookId,cartId,3000L));
+		cartItemRepository.save(new CartItem(1L,3L,bookId,cartId,3000L, 3000L));
 		
 		CartItem item = cartItemService.getCartItemByBookId(cartId, bookId);
 		
@@ -144,11 +147,26 @@ class CartItemServiceTest {
 	
 	@Test
 	void testGetBookByIdForItem() {
-		CartItem item = new CartItem(1L,3L,bookId,cartId,3000L);
+		CartItem item = new CartItem(1L,3L,bookId,cartId,3000L, 3000L);
 		BookDto dto = cartItemService.getBookByIdForItem(item);
 		
 		assertThat(dto).isNotNull();
 		assertThat(dto.getId()).isEqualTo(bookId);
+	}
+	
+	@Test
+	void testGetCartItemsById() {
+		cartItemRepository.save(new CartItem(1L,3L,bookId,cartId,3000L, 3000L));
+		
+		CartItem item = cartItemService.getCartItemById(1L);
+		
+		assertThat(item).isNotNull();
+		assertThat(item.getCartItemId()).isEqualTo(1L);
+	}
+	
+	@Test
+	void testGetCartItemByIdFail() {
+		assertThatThrownBy(() -> cartItemService.getCartItemById(999L)).isInstanceOf(DataNotFoundException.class);
 	}
 }
 

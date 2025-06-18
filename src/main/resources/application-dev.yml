@@ -7,3 +7,9 @@ eureka:
   instance:
     prefer-ip-address: true
 
+# redis 사용 시
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379

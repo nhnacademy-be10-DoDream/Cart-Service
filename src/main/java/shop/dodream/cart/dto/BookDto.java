@@ -10,6 +10,8 @@ import lombok.NoArgsConstructor;
 public class BookDto {
 	private Long id;
 	private String title;
+	private Long originalPrice;
 	private Long discountPrice;
 	private Long stockQuantity;
+	private String imageUrl;
 }

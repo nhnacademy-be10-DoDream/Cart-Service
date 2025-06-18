@@ -59,6 +59,18 @@ public class GuestCartService {
 		return getCart(guestId);
 	}
 	
+	public void removeItem(String guestId, Long bookId) {
+		GuestCart cart = redisTemplate.opsForValue().get(buildKey(guestId));
+		if (cart == null) return;
+		
+		cart.setItems(
+				cart.getItems().stream()
+						.filter(item -> !item.getBookId().equals(bookId))
+						.collect(Collectors.toList())
+		);
+		redisTemplate.opsForValue().set(buildKey(guestId), cart, Duration.ofDays(7));
+	}
+	
 	public void deleteCart(String guestId) {
 		redisTemplate.delete(buildKey(guestId));
 	}
