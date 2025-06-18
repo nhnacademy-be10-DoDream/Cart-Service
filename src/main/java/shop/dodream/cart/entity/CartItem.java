@@ -4,16 +4,14 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
 @Getter
 @Setter
+@EqualsAndHashCode
 public class CartItem {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,8 +24,8 @@ public class CartItem {
 	private Long cartId;
 	//할인가
 	private Long price;
-	//책구매가능여부
-	private boolean isAvailable;
+
+	
 	
 	public CartItem(Long cartId, Long bookId) {
 		this.cartId = cartId;
