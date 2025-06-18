@@ -28,7 +28,14 @@ public class CartItem {
 	//카드고유ID
 	private Long cartId;
 	//할인가
+
 	private Long discountPrice;
 	//정가
 	private Long originalPrice;
+
+	public CartItem(Long cartId, Long bookId) {
+		this.cartId = cartId;
+		this.bookId = bookId;
+	}
 }
+
