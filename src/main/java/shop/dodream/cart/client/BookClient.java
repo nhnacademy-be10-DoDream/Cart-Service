@@ -11,8 +11,8 @@ import java.util.List;
 @FeignClient(name = "book-service")
 public interface BookClient {
 	
-	@GetMapping("/books/{id}")
-	BookDto getBookById(@PathVariable("id") Long id);
+	@GetMapping("/books/{bookId}")
+	BookDto getBookById(@PathVariable("bookId") Long id);
 	@GetMapping("/books")
 	List<BookDto> getBooksByIds(@RequestParam("ids") List<Long> bookIds);
 }

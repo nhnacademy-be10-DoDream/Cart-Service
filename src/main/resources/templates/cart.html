@@ -1,0 +1,61 @@
+<!-- 장바구니 페이지 시작 -->
+<table cellspacing="0" cellpadding="0" width="866" align="center" border="0">
+    <tr>
+        <td valign="top" bgcolor="#ffffff">
+
+            <!-- 전체 선택 / 주문 / 삭제 -->
+            <div class="basket_all_select">
+                <label>
+                    <input type="checkbox" id="chkBasketAll" th:checked="true" onclick="fn_BasketAll()">
+                    <span>전체선택</span>
+                </label>
+                <div><input type="button" class="basket_top_w" value="삭제" onclick="fn_BasketAllDel()"></div>
+                <div><input type="button" class="basket_top_p" value="주문" onclick="AllChoiceOrder()"></div>
+
+            </div>
+
+            <!-- 장바구니 항목 리스트 -->
+            <form th:action="@{/cart/order}" method="post">
+                <input type="hidden" name="isHalfDeliveryOrder" value="0">
+
+                <table class="table_shop_blue" width="100%">
+                    <thead>
+                    <tr>
+                        <th width="52" align="center">
+                            <input type="checkbox" onclick="revcheck(this)">
+                        </th>
+                        <th align="center">상품명</th>
+                        <th width="150" align="center">가격</th>
+                        <th width="120" align="center">수량</th>
+                        <th width="100" align="center">삭제</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="item : ${cartItems}">
+                        <td align="center">
+                            <input type="checkbox" name="itemIds" th:value="${item.id}" class="basket_CheckBox" th:checked="true">
+                        </td>
+                        <td>
+                            <a th:href="@{/product/{id}(id=${item.id})}" th:title="${item.name}">
+                                <img th:src="@{${item.thumbnailUrl}}" style="width:48px;">
+                            </a>
+                        </td>
+                        <td>
+                            <div>
+                                정가: <s th:text="${#numbers.formatInteger(item.originalPrice, 0, 'COMMA')} + '원'"></s><br>
+                                판매가: <span class="p1" th:text="${#numbers.formatInteger(item.discountedPrice, 0, 'COMMA')} + '원'"></span><br>
+                            </div>
+                        </td>
+                        <td align="center">
+                            <input type="number" name="quantities" th:value="${item.quantity}" min="1" class="input1">
+                        </td>
+                        <td align="center">
+                            <button type="submit" formaction="#" name="delete" th:formaction="@{/cart/delete/{id}(id=${item.id})}">삭제</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </form>
+        </td>
+    </tr>
+</table>
