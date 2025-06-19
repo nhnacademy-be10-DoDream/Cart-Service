@@ -156,12 +156,12 @@ class CartItemServiceTest {
 	
 	@Test
 	void testGetCartItemsById() {
-		cartItemRepository.save(new CartItem(1L,3L,bookId,cartId,3000L, 3000L));
+		CartItem saved = cartItemRepository.save(new CartItem(null, 3L, bookId, cartId, 3000L, 3000L));
 		
-		CartItem item = cartItemService.getCartItemById(1L);
+		CartItem item = cartItemService.getCartItemById(saved.getCartItemId());
 		
 		assertThat(item).isNotNull();
-		assertThat(item.getCartItemId()).isEqualTo(1L);
+		assertThat(item.getCartItemId()).isEqualTo(saved.getCartItemId());
 	}
 	
 	@Test

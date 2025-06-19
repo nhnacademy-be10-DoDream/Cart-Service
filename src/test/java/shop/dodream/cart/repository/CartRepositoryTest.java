@@ -10,7 +10,7 @@ import java.util.Optional;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-public class CartRepositoryTest {
+class CartRepositoryTest {
 	
 	@Autowired
 	CartRepository cartRepository;

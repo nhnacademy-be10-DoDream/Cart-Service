@@ -89,7 +89,7 @@ public class CartItemService {
 	@Transactional
 	public void removeCartItem(Long cartItemId) {
 		if(!cartItemRepository.existsById(cartItemId)) {
-			throw new DataNotFoundException("CartItem not found");
+			throw new DataNotFoundException("CartItem: " + cartItemId + " not found");
 		}
 		cartItemRepository.deleteById(cartItemId);
 	}
@@ -157,7 +157,7 @@ public class CartItemService {
 	}
 	
 	public CartItem getCartItemById(Long cartItemId) {
-		return cartItemRepository.findById(cartItemId).orElseThrow(() -> new DataNotFoundException("CartItem not found"));
+		return cartItemRepository.findById(cartItemId).orElseThrow(() -> new DataNotFoundException("No Get CartItem: "+cartItemId+" Not Found"));
 	}
 	
 	public BookDto getBookByIdForItem(CartItem item) {
