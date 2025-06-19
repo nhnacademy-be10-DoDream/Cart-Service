@@ -17,6 +17,7 @@ import shop.dodream.cart.exception.MissingIdentifierException;
 import shop.dodream.cart.repository.CartRepository;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,7 +28,7 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @Transactional
-public class CartServiceTest {
+class CartServiceTest {
 	
 	@Autowired
 	private CartService cartService;
@@ -51,6 +52,23 @@ public class CartServiceTest {
 	void setup() {
 		BookDto mockBook = new BookDto(1L,"testbook",3000L,3000L,10L,"test");
 		given(bookClient.getBookById(anyLong())).willReturn(mockBook);
+		
+		given(cartRepository.save(any(Cart.class))).willAnswer(invocation -> {
+			Cart cart = invocation.getArgument(0);
+			cart.setCartId(1L); // 테스트용 ID 설정
+			return cart;
+		});
+		
+		given(cartRepository.findByUserId("testUserId"))
+				.willReturn(Optional.of(new Cart(1L, "testUserId", null)));
+		
+		given(cartRepository.findByGuestId("testGuestId"))
+				.willReturn(Optional.of(new Cart(1L, null, "testGuestId")));
+		
+		given(cartRepository.findById(1L))
+				.willReturn(Optional.of(new Cart(1L, "testUserId", null)));
+		
+		given(cartItemService.getCartItems(anyLong())).willReturn(Collections.emptyList());
 	}
 	
 	@Test
@@ -67,7 +85,7 @@ public class CartServiceTest {
 		CartResponse cartResponse = cartService.saveCart(null,guestId);
 		
 		assertThat(cartResponse).isNotNull();
-		assertThat(cartResponse.getUserId()).isEqualTo(null);
+		assertThat(cartResponse.getUserId()).isNull();
 		assertThat(cartResponse.getGuestId()).isEqualTo(guestId);
 	}
 	
@@ -100,11 +118,17 @@ public class CartServiceTest {
 	@Test
 	void testDeleteCartByCartId(){
 		Cart cart = new Cart();
+		cart.setCartId(1L);
 		cart.setUserId(userId);
 		cart.setGuestId(guestId);
-		cart = cartRepository.save(cart);
-		cartService.deleteCart(cart.getCartId());
-		assertThat(cartRepository.findById(cart.getCartId())).isEmpty();
+		
+		given(cartRepository.existsById(1L)).willReturn(true);
+	
+		doNothing().when(cartRepository).deleteById(1L);
+		
+		cartService.deleteCart(1L);
+		
+		verify(cartRepository).deleteById(1L);
 	}
 	
 	@Test

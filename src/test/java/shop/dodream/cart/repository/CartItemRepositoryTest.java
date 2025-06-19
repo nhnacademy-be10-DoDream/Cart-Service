@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-public class CartItemRepositoryTest {
+class CartItemRepositoryTest {
 	
 	@Autowired
 	CartItemRepository cartItemRepository;
@@ -32,7 +32,11 @@ public class CartItemRepositoryTest {
 		cartItemRepository.save(cartItem);
 		
 		CartItem result = cartItemRepository.findByCartIdAndBookId(cartItem.getCartId(), cartItem.getBookId());
-		assertThat(result).isEqualTo(cartItem);
+		assertThat(result.getCartId()).isEqualTo(cartItem.getCartId());
+		assertThat(result.getBookId()).isEqualTo(cartItem.getBookId());
+		assertThat(result.getQuantity()).isEqualTo(cartItem.getQuantity());
+		assertThat(result.getDiscountPrice()).isEqualTo(cartItem.getDiscountPrice());
+		assertThat(result.getOriginalPrice()).isEqualTo(cartItem.getOriginalPrice());
 	}
 	
 	@Test

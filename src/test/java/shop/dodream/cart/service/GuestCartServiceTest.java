@@ -132,7 +132,7 @@ class GuestCartServiceTest {
 		assertEquals(1, cart.getItems().size());
 		assertEquals(2L, cart.getItems().get(0).getBookId());
 		
-		verify(valueOperations).set(eq(redisKey), eq(cart), eq(Duration.ofDays(7)));
+		verify(valueOperations).set(redisKey, cart, Duration.ofDays(7));
 	}
 	
 	@MockitoSettings(strictness = Strictness.LENIENT)
