@@ -1,0 +1,29 @@
+# application-ci.yml
+spring:
+  cloud:
+    config:
+      enabled: false
+  datasource:
+    url: jdbc:mysql://localhost:3306/testdb
+    username: root
+    password: test
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+jwt:
+  secret: dummy-ci-secret
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  health:
+    db:
+      enabled: true
+    redis:
+      enabled: true

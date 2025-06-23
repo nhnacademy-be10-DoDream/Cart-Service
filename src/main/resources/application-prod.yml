@@ -1,0 +1,8 @@
+spring:
+  config:
+    import: configserver:http://localhost:10332
+  cloud:
+    config:
+      name: ${spring.application.name}
+      profile: ${spring.profiles.active}
+      label: main
