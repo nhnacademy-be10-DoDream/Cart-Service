@@ -47,6 +47,10 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-config</artifactId>
+		</dependency>
 
 		<!-- optional -->
 		<dependency>
@@ -105,6 +109,8 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-cache</artifactId>
 		</dependency>
+
+
 
 		<!-- Test -->
 		<dependency>
@@ -173,7 +179,7 @@
 				</configuration>
 			</plugin>
 		</plugins>
-		<finalName>cart-service</finalName>
+		<finalName>cart</finalName>
 	</build>
 
 </project>

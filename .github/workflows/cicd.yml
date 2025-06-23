@@ -1,0 +1,128 @@
+name: Java CI/CD for Single Service
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  health-check-pr:
+    name: Health Check for PR
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    services:
+      mysql:
+        image: mysql:8
+        ports:
+          - 3306:3306
+        env:
+          MYSQL_ROOT_PASSWORD: test
+          MYSQL_DATABASE: testdb
+        options: --health-cmd "mysqladmin ping --silent" --health-interval 10s --health-timeout 5s --health-retries 5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Build
+        run: mvn -B clean package -DskipTests
+
+      - name: Run JAR for PR health check
+        run: |
+          java -Dserver.port=9999 \
+               -Dspring.cloud.discovery.enabled=false \
+               -Dspring.profiles.active=ci \
+               -jar target/*.jar &
+          PID=$!
+          
+          for i in {1..10}; do
+            if curl --fail --silent http://localhost:9999/actuator/health; then
+              echo "✅ Health check 성공"
+              kill $PID
+              wait $PID || true
+              exit 0
+            fi
+            echo "⏱️ $i초 후 재시도"
+            sleep 1
+          done
+          
+          echo "❌ Health check 실패"
+          kill $PID
+          wait $PID || true
+          exit 1
+  
+  
+
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
+    env:
+      SERVICE_NAME: cart
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: ☕ Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: 🛠️ Build with Maven
+        run: mvn -B clean package -DskipTests
+
+      - name: 💾 백업 기존 JAR on Remote
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_IP }}
+          username: ${{ secrets.SSH_ID }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            SERVICE_NAME=${{ env.SERVICE_NAME }}
+            JAR_PATH=~/target/${SERVICE_NAME}.jar
+            BACKUP_PATH=~/backup_jars/${SERVICE_NAME}.jar.bak
+            mkdir -p ~/backup_jars
+            if [ -f "$JAR_PATH" ]; then
+              cp "$JAR_PATH" "$BACKUP_PATH"
+              echo "✅ 백업 완료: $BACKUP_PATH"
+            else
+              echo "⚠️ 백업 생략: $JAR_PATH 없음"
+            fi
+
+      - name: 🚚 Upload JAR to Remote
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_IP }}
+          username: ${{ secrets.SSH_ID }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          source: "target/*.jar"
+          target: "~/"
+          rm: false
+
+      - name: 🚀 Execute startup.sh on Remote
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_IP }}
+          username: ${{ secrets.SSH_ID }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: "~/startup.sh ${{ env.SERVICE_NAME }}"
