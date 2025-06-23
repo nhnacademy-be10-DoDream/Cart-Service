@@ -1,16 +1,3 @@
 spring:
   application:
-    name: cart-service # auth -> 본인의 서비스 명
-  profiles:
-    active: dev # dev or prod
-server:
-  port: 10326 # 본인의 포트번호
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health
-  endpoint:
-    health:
-      show-details: always
+    name: cart-service

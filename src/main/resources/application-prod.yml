@@ -1,10 +1,8 @@
-eureka:
-  client:
-    register-with-eureka: true
-    fetch-registry: true
-    service-url:
-      defaultZone: http://dodream.shop:10322/eureka
-  instance:
-    prefer-ip-address: false
-    hostname: dodream.shop
-
+spring:
+  config:
+    import: configserver:http://localhost:10332
+  cloud:
+    config:
+      name: ${spring.application.name}
+      profile: ${spring.profiles.active}
+      label: main

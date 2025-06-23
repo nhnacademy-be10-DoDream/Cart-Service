@@ -75,7 +75,7 @@ public class CartItemService {
 	@Transactional
 	public CartItemResponse updateCartItemQuantity(Long  cartItemId, Long quantity) {
 		CartItem item = cartItemRepository.findById(cartItemId)
-				                .orElseThrow(() -> new DataNotFoundException("CartItem not found"));
+				                .orElseThrow(() -> new DataNotFoundException("Cart item to update not found"));
 		
 		BookDto book = getBookByIdForItem(item);
 		
@@ -89,7 +89,7 @@ public class CartItemService {
 	@Transactional
 	public void removeCartItem(Long cartItemId) {
 		if(!cartItemRepository.existsById(cartItemId)) {
-			throw new DataNotFoundException("CartItem: " + cartItemId + " not found");
+			throw new DataNotFoundException("CartItem to remove not found");
 		}
 		cartItemRepository.deleteById(cartItemId);
 	}
@@ -98,7 +98,7 @@ public class CartItemService {
 	public void removeAllCartItems(Long cartId) {
 		List<CartItem> items = cartItemRepository.findByCartId(cartId);
 		if (items.isEmpty()) {
-			throw new DataNotFoundException("No cart items to remove for cartId " + cartId);
+			throw new DataNotFoundException("No cart items to remove for cartId: " + cartId);
 		}
 		cartItemRepository.deleteByCartId(cartId);
 	}
@@ -157,7 +157,7 @@ public class CartItemService {
 	}
 	
 	public CartItem getCartItemById(Long cartItemId) {
-		return cartItemRepository.findById(cartItemId).orElseThrow(() -> new DataNotFoundException("No Get CartItem: "+cartItemId+" Not Found"));
+		return cartItemRepository.findById(cartItemId).orElseThrow(() -> new DataNotFoundException("CartItem to get not found"));
 	}
 	
 	public BookDto getBookByIdForItem(CartItem item) {
