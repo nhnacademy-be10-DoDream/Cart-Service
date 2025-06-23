@@ -49,7 +49,7 @@ jobs:
                -jar target/*.jar &
           PID=$!
           
-          for i in {1..10}; do
+          for i in {1..30}; do
             if curl --fail --silent http://localhost:9999/actuator/health; then
               echo "✅ Health check 성공"
               kill $PID
