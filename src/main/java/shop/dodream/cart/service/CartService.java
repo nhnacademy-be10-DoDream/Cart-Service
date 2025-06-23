@@ -23,7 +23,7 @@ public class CartService {
 	
 	@Transactional
 	public CartResponse saveCart(String userId, String guestId) {
-		if (userId == null && !StringUtils.hasText(guestId)) {
+		if (!StringUtils.hasText(userId) && !StringUtils.hasText(guestId)) {
 			throw new MissingIdentifierException("userId or guestId must be provided.");
 		}
 		Cart cart = new Cart();
@@ -34,7 +34,7 @@ public class CartService {
 	
 	@Transactional(readOnly = true)
 	public Optional<CartResponse> getCartByUserId(String userId) {
-		if (userId == null) {
+		if (!StringUtils.hasText(userId)) {
 			throw new MissingIdentifierException("userId must be provided.");
 		}
 		return cartRepository.findByUserId(userId)
@@ -49,13 +49,11 @@ public class CartService {
 		if(!StringUtils.hasText(guestId)) {
 			throw new MissingIdentifierException("guestId must be provided.");
 		}
-		Optional<Cart> cartOpt = cartRepository.findByGuestId(guestId);
-		if (cartOpt.isEmpty()) {
-			return Optional.empty();
-		}
-		Cart cart = cartOpt.get();
-		List<CartItemResponse> itemResponses = cartItemService.getCartItems(cart.getCartId());
-		return Optional.of(CartResponse.of(cart, itemResponses));
+		return cartRepository.findByGuestId(guestId)
+				       .map(cart -> {
+					       List<CartItemResponse> itemResponses = cartItemService.getCartItems(cart.getCartId());
+					       return CartResponse.of(cart, itemResponses);
+				       });
 	}
 	
 	
@@ -70,7 +68,7 @@ public class CartService {
 	
 	
 	public void mergeCartOnLogin(String userId, String guestId) {
-		if (userId == null || !StringUtils.hasText(guestId)) {
+		if (!StringUtils.hasText(userId) || !StringUtils.hasText(guestId)) {
 			throw new MissingIdentifierException("Both userId and guestId must be provided.");
 		}
 		

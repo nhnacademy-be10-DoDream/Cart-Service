@@ -161,6 +161,10 @@ public class CartItemService {
 	}
 	
 	public BookDto getBookByIdForItem(CartItem item) {
-		return bookClient.getBookById(item.getBookId());
+		BookDto bookDto = bookClient.getBookById(item.getBookId());
+		if (bookDto == null) {
+			throw new DataNotFoundException("도서 정보를 찾을 수 없습니다: " + item.getBookId());
+		}
+		return bookDto;
 	}
 }
