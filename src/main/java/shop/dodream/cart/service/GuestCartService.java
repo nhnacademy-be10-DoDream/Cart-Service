@@ -5,8 +5,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import shop.dodream.cart.client.BookClient;
 import shop.dodream.cart.dto.*;
-import shop.dodream.cart.exception.DataNotFoundException;
-
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
