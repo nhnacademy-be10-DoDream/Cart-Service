@@ -25,12 +25,12 @@ public class GuestCartItemResponse {
 		
 		return new GuestCartItemResponse(
 				item.getBookId(),
-				book.getTitle(),
+				book != null ? book.getTitle() : null,
 				item.getQuantity(),
-				book.getStockQuantity(),
-				book.getOriginalPrice(),
-				book.getDiscountPrice(),
-				book.getImageUrl()
+				book != null ? book.getStockQuantity() : null,
+				book != null ? book.getOriginalPrice() : null,
+				book != null ? book.getDiscountPrice() : null,
+				book != null ? book.getImageUrl() : null
 		);
 	}
 }
