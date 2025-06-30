@@ -1,6 +1,7 @@
 package shop.dodream.cart.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import shop.dodream.cart.client.BookClient;
@@ -13,11 +14,14 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class GuestCartService {
 	
 	private static final String REDIS_KEY_PREFIX = "guest_cart:";
 	private static final Duration CART_EXPIRATION = Duration.ofDays(7);
 	private static final int MAX_ITEM_COUNT = 20;
+	private static final int MAX_RETRY = 3;
+	private static final long RETRY_DELAY_MS = 500;
 	
 	private final RedisTemplate<String, GuestCart> redisTemplate;
 	private final BookClient bookClient;
@@ -110,6 +114,30 @@ public class GuestCartService {
 		}
 		if (request.getBookId() == null) {
 			throw new IllegalArgumentException("bookId는 null이 될 수 없습니다.");
+		}
+	}
+	
+	public void deleteGuestCartWithRetry(String guestId) {
+		String key = REDIS_KEY_PREFIX + guestId;
+		int attempt = 0;
+		boolean deleted = false;
+		
+		while (attempt < MAX_RETRY && !deleted) {
+			try {
+				deleted = Boolean.TRUE.equals(redisTemplate.delete(key));
+				if (!deleted) {
+					log.warn("Redis guest cart [{}] delete failed (attempt {}/{})", key, attempt + 1, MAX_RETRY);
+					Thread.sleep(RETRY_DELAY_MS);
+				}
+			} catch (Exception e) {
+				log.error("Redis guest cart [{}] delete exception (attempt {}/{}): {}", key, attempt + 1, MAX_RETRY, e.getMessage());
+				try { Thread.sleep(RETRY_DELAY_MS); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+			}
+			attempt++;
+		}
+		
+		if (!deleted) {
+			log.error("Redis guest cart [{}] delete failed after {} attempts", key, MAX_RETRY);
 		}
 	}
 }

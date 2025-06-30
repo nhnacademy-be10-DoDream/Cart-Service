@@ -8,10 +8,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class BookDto {
-	private Long id;
+	private Long bookId;
 	private String title;
-	private Long originalPrice;
-	private Long discountPrice;
-	private Long stockQuantity;
-	private String imageUrl;
+	private Long salePrice;
+	private String bookUrl;
 }

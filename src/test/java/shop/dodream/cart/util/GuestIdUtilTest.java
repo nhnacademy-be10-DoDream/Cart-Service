@@ -44,8 +44,7 @@ class GuestIdUtilTest {
 		String result = guestIdUtil.getOrCreateGuestId(request, response);
 		
 		// then
-		assertThat(result).isNotNull();
-		assertThat(result).matches("^[a-f0-9\\-]{36}$"); // UUID 형식
+		assertThat(result).isNotNull().matches("^[a-f0-9\\-]{36}$"); // UUID 형식
 		
 		// 쿠키 추가 확인
 		verify(response, times(1)).addCookie(argThat(cookie ->

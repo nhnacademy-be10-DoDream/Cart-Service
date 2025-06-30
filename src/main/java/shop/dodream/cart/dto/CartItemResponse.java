@@ -12,13 +12,11 @@ public class CartItemResponse {
 	private Long cartItemId;
 	private Long bookId;
 	private String bookTitle;
-	private Long originalPrice;
-	private Long discountPrice;
+	private Long salePrice;
 	@NotNull
 	@Min(1)
 	private Long quantity;
-	private Long stockQuantity;
-	private String imageUrl;
+	private String bookUrl;
 	
 	public static CartItemResponse of(CartItem item, BookDto book) {
 		
@@ -26,11 +24,9 @@ public class CartItemResponse {
 				item.getCartItemId(),
 				item.getBookId(),
 				book.getTitle(),
-				book.getOriginalPrice(),
-				book.getDiscountPrice(),
+				book.getSalePrice(),
 				item.getQuantity(),
-				book.getStockQuantity(),
-				book.getImageUrl()
+				book.getBookUrl()
 		);
 	}
 }

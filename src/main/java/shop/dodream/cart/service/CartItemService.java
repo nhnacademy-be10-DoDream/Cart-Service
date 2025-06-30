@@ -33,7 +33,7 @@ public class CartItemService {
 		List<BookDto> books = bookClient.getBooksByIds(bookIds);
 		
 		Map<Long, BookDto> bookMap = books.stream()
-				                             .collect(Collectors.toMap(BookDto::getId, Function.identity()));
+				                             .collect(Collectors.toMap(BookDto::getBookId, Function.identity()));
 		
 		return items.stream()
 				       .map(item -> {
@@ -65,8 +65,7 @@ public class CartItemService {
 		
 		item.setCartId(request.getCartId());
 		item.setQuantity(request.getQuantity());
-		item.setDiscountPrice(book.getDiscountPrice());
-		item.setOriginalPrice(book.getOriginalPrice());
+		item.setSalePrice(book.getSalePrice());
 		
 		CartItem saved = cartItemRepository.save(item);
 		return CartItemResponse.of(saved, book);
@@ -80,8 +79,7 @@ public class CartItemService {
 		BookDto book = getBookByIdForItem(item);
 		
 		item.setQuantity(quantity);
-		item.setDiscountPrice(book.getDiscountPrice());
-		item.setOriginalPrice(book.getOriginalPrice());
+		item.setSalePrice(book.getSalePrice());
 		CartItem updated = cartItemRepository.save(item);
 		return CartItemResponse.of(updated, book);
 	}
@@ -98,13 +96,13 @@ public class CartItemService {
 	public void removeAllCartItems(Long cartId) {
 		List<CartItem> items = cartItemRepository.findByCartId(cartId);
 		if (items.isEmpty()) {
-			throw new DataNotFoundException("No cart items to remove for cartId: " + cartId);
+			return;
 		}
 		cartItemRepository.deleteByCartId(cartId);
 	}
 	
 	@Transactional
-	public void removeCartItemsByBookId(Long cartId, Long bookId) {
+	public void removeCartItemByBookId(Long cartId, Long bookId) {
 		CartItem item = cartItemRepository.findByCartIdAndBookId(cartId, bookId);
 		if (item == null) {
 			throw new DataNotFoundException("No cart item found for cartId " + cartId + " and bookId " + bookId);
@@ -130,7 +128,7 @@ public class CartItemService {
 		
 		List<BookDto> books = bookClient.getBooksByIds(bookIds);
 		Map<Long, BookDto> bookMap = books.stream()
-				                             .collect(Collectors.toMap(BookDto::getId, Function.identity()));
+				                             .collect(Collectors.toMap(BookDto::getBookId, Function.identity()));
 		
 		// 2. 병합
 		for (GuestCartItem guestItem : guestItems) {
@@ -149,8 +147,7 @@ public class CartItemService {
 				newItem.setCartId(memberCart.getCartId());
 				newItem.setBookId(bookId);
 				newItem.setQuantity(guestItem.getQuantity());
-				newItem.setOriginalPrice(book.getOriginalPrice());
-				newItem.setDiscountPrice(book.getDiscountPrice());
+				newItem.setSalePrice(book.getSalePrice());
 				cartItemRepository.save(newItem);
 			}
 		}

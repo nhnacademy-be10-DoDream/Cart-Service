@@ -2,6 +2,7 @@ package shop.dodream.cart.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+import jakarta.ws.rs.PUT;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,9 +40,9 @@ public class CartItemController {
 	
 	// 장바구니 아이템 수량 수정
 	@Operation(summary = "장바구니 항목의 수량 변경", description = "장바구니 아이디로 장바구니에 항목의 수량을 수정합니다.")
-	@PatchMapping("/carts/{cartId}/cart-items/{cartItemId}/quantity")
+	@PutMapping("/carts/{cartId}/cart-items/{cartItemId}/quantity")
 	public ResponseEntity<CartItemResponse> updateCartItemQuantity(@RequestBody @Valid CartItemRequest request,
-	                                                               @PathVariable Long cartItemId) {
+	                                                               @PathVariable Long cartItemId, @PathVariable Long cartId) {
 		CartItemResponse response = cartItemService.updateCartItemQuantity(cartItemId, request.getQuantity());
 		return ResponseEntity.ok(response);
 	}
@@ -85,7 +86,7 @@ public class CartItemController {
 	public ResponseEntity<Void> removeCartItemsByBookId(
 			@PathVariable Long cartId,
 			@PathVariable Long bookId) {
-		cartItemService.removeCartItemsByBookId(cartId, bookId);
+		cartItemService.removeCartItemByBookId(cartId, bookId);
 		return ResponseEntity.noContent().build();
 	}
 	

@@ -19,6 +19,8 @@ public class GuestIdUtil {
 		Cookie newCookie = new Cookie("guestId", guestId);
 		newCookie.setPath("/");
 		newCookie.setMaxAge(60 * 60 * 24 * 7); // 7일
+		newCookie.setHttpOnly(true);
+		newCookie.setSecure(true);
 		response.addCookie(newCookie);
 		return guestId;
 	}

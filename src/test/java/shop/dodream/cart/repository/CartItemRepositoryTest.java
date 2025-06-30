@@ -19,7 +19,7 @@ class CartItemRepositoryTest {
 
 	@Test
 	void testFindByCartId() {
-		CartItem cartItem = new CartItem(1L, 3L,3L,1L,3000L,3000L);
+		CartItem cartItem = new CartItem(1L, 3L,3L,1L,3000L);
 		cartItemRepository.save(cartItem);
 
 		List<CartItem> result = cartItemRepository.findByCartId(cartItem.getCartId());
@@ -28,20 +28,19 @@ class CartItemRepositoryTest {
 
 	@Test
 	void testFindByCartIdAndBookId() {
-		CartItem cartItem = new CartItem(1L, 3L,3L,1L,3000L,3000L);
+		CartItem cartItem = new CartItem(1L, 3L,3L,1L,3000L);
 		cartItemRepository.save(cartItem);
 
 		CartItem result = cartItemRepository.findByCartIdAndBookId(cartItem.getCartId(), cartItem.getBookId());
 		assertThat(result.getCartId()).isEqualTo(cartItem.getCartId());
 		assertThat(result.getBookId()).isEqualTo(cartItem.getBookId());
 		assertThat(result.getQuantity()).isEqualTo(cartItem.getQuantity());
-		assertThat(result.getDiscountPrice()).isEqualTo(cartItem.getDiscountPrice());
-		assertThat(result.getOriginalPrice()).isEqualTo(cartItem.getOriginalPrice());
+		assertThat(result.getSalePrice()).isEqualTo(cartItem.getSalePrice());
 	}
 
 	@Test
 	void testDeleteByCartIdAndBookId() {
-		CartItem cartItem = new CartItem(1L, 3L,3L,1L,3000L,3000L);
+		CartItem cartItem = new CartItem(1L, 3L,3L,1L,3000L);
 		cartItemRepository.save(cartItem);
 
 		CartItem beforeDelete = cartItemRepository.findByCartIdAndBookId(1L, 3L);
@@ -55,7 +54,7 @@ class CartItemRepositoryTest {
 
 	@Test
 	void testDeleteByCartId() {
-		CartItem cartItem = new CartItem(null, 1L, 3L, 1L, 3000L, 3000L);
+		CartItem cartItem = new CartItem(null, 1L, 3L, 1L, 3000L);
 		cartItemRepository.save(cartItem);
 
 		List<CartItem> beforeDelete = cartItemRepository.findByCartId(1L);
