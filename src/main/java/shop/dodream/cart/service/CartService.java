@@ -89,6 +89,7 @@ public class CartService {
 		cartItemService.mergeGuestItemsIntoMemberCart(guestCart.getItems(), memberCart);
 		
 		// 4. Redis 비회원 장바구니 삭제
-		guestCartService.deleteCart(guestId);
+		guestCartService.deleteGuestCartWithRetry(guestId);
 	}
+	
 }

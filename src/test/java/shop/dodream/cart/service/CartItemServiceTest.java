@@ -15,12 +15,8 @@ import shop.dodream.cart.entity.Cart;
 import shop.dodream.cart.entity.CartItem;
 import shop.dodream.cart.exception.DataNotFoundException;
 import shop.dodream.cart.repository.CartItemRepository;
-
-
 import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 
@@ -44,7 +40,7 @@ class CartItemServiceTest {
 	
 	@BeforeEach
 	void setup() {
-		BookDto mockBook = new BookDto(bookId, "testbook", 3000L, 3000L, 10L, "test");
+		BookDto mockBook = new BookDto(bookId, "testbook", 3000L,  "test");
 		given(bookClient.getBookById(anyLong())).willReturn(mockBook);
 		given(bookClient.getBooksByIds(List.of(bookId))).willReturn(List.of(mockBook));
 	}
@@ -60,7 +56,7 @@ class CartItemServiceTest {
 	
 	@Test
 	void testAddCartItem_whenAlreadyExists() {
-		cartItemRepository.save(new CartItem(null, 3L, bookId, cartId, 3000L, 3000L));
+		cartItemRepository.save(new CartItem(null, 3L, bookId, cartId, 3000L));
 		
 		CartItemRequest request = new CartItemRequest(cartId, bookId, 2L);
 		CartItemResponse response = cartItemService.addCartItem(request);
@@ -70,7 +66,7 @@ class CartItemServiceTest {
 	
 	@Test
 	void testGetCartItems() {
-		cartItemRepository.save(new CartItem(null, 3L, bookId, cartId, 3000L, 3000L));
+		cartItemRepository.save(new CartItem(null, 3L, bookId, cartId, 3000L));
 		
 		List<CartItemResponse> items = cartItemService.getCartItems(cartId);
 		
@@ -80,7 +76,7 @@ class CartItemServiceTest {
 	
 	@Test
 	void testGetCartItems_whenBookNotFound() {
-		cartItemRepository.save(new CartItem(null, 3L, bookId, cartId, 3000L, 3000L));
+		cartItemRepository.save(new CartItem(null, 3L, bookId, cartId, 3000L));
 		given(bookClient.getBooksByIds(List.of(bookId))).willReturn(List.of()); // 빈 리스트
 		
 		assertThatThrownBy(() -> cartItemService.getCartItems(cartId))
@@ -90,7 +86,7 @@ class CartItemServiceTest {
 	
 	@Test
 	void testUpdateCartItemQuantity() {
-		CartItem saved = cartItemRepository.save(new CartItem(null, 3L, bookId, cartId, 3000L, 3000L));
+		CartItem saved = cartItemRepository.save(new CartItem(null, 3L, bookId, cartId, 3000L));
 		CartItemResponse response = cartItemService.updateCartItemQuantity(saved.getCartItemId(), 5L);
 		
 		assertThat(response.getQuantity()).isEqualTo(5L);
@@ -105,7 +101,7 @@ class CartItemServiceTest {
 	
 	@Test
 	void testRemoveCartItem() {
-		CartItem saved = cartItemRepository.save(new CartItem(null, 3L, bookId, cartId, 3000L, 3000L));
+		CartItem saved = cartItemRepository.save(new CartItem(null, 3L, bookId, cartId, 3000L));
 		cartItemService.removeCartItem(saved.getCartItemId());
 		
 		assertThat(cartItemRepository.existsById(saved.getCartItemId())).isFalse();
@@ -119,37 +115,40 @@ class CartItemServiceTest {
 	
 	@Test
 	void testRemoveAllCartItems() {
-		cartItemRepository.save(new CartItem(null, 3L, bookId, cartId, 3000L, 3000L));
+		cartItemRepository.save(new CartItem(null, 3L, bookId, cartId, 3000L));
 		cartItemService.removeAllCartItems(cartId);
 		
 		assertThat(cartItemRepository.findByCartId(cartId)).isEmpty();
 	}
 	
 	@Test
-	void testRemoveAllCartItemsFail() {
-		assertThatThrownBy(() -> cartItemService.removeAllCartItems(cartId))
-				.isInstanceOf(DataNotFoundException.class)
-				.hasMessageContaining("No cart items to remove");
+	void testRemoveAllCartItems_whenItemsDoNotExist_shouldNotThrowException() {
+		// given: 아무 아이템도 없는 상태
+		assertThat(cartItemRepository.findByCartId(cartId)).isEmpty();
+		
+		// when & then: 예외 발생 없이 정상 동작해야 함
+		assertThatCode(() -> cartItemService.removeAllCartItems(cartId))
+				.doesNotThrowAnyException();
 	}
 	
 	@Test
 	void testRemoveCartItemsByBookId() {
-		cartItemRepository.save(new CartItem(null, 3L, bookId, cartId, 3000L, 3000L));
-		cartItemService.removeCartItemsByBookId(cartId, bookId);
+		cartItemRepository.save(new CartItem(null, 3L, bookId, cartId, 3000L));
+		cartItemService.removeCartItemByBookId(cartId, bookId);
 		
 		assertThat(cartItemRepository.findByCartIdAndBookId(cartId, bookId)).isNull();
 	}
 	
 	@Test
 	void testRemoveCartItemsByBookIdFail() {
-		assertThatThrownBy(() -> cartItemService.removeCartItemsByBookId(cartId, bookId))
+		assertThatThrownBy(() -> cartItemService.removeCartItemByBookId(cartId, bookId))
 				.isInstanceOf(DataNotFoundException.class)
 				.hasMessageContaining("No cart item found");
 	}
 	
 	@Test
 	void testGetCartItemByBookIdSuccess() {
-		cartItemRepository.save(new CartItem(null, 3L, bookId, cartId, 3000L, 3000L));
+		cartItemRepository.save(new CartItem(null, 3L, bookId, cartId, 3000L));
 		CartItem item = cartItemService.getCartItemByBookId(cartId, bookId);
 		
 		assertThat(item).isNotNull();
@@ -164,16 +163,16 @@ class CartItemServiceTest {
 	
 	@Test
 	void testGetBookByIdForItem() {
-		CartItem item = new CartItem(null, 3L, bookId, cartId, 3000L, 3000L);
+		CartItem item = new CartItem(null, 3L, bookId, cartId, 3000L);
 		BookDto dto = cartItemService.getBookByIdForItem(item);
 		
 		assertThat(dto).isNotNull();
-		assertThat(dto.getId()).isEqualTo(bookId);
+		assertThat(dto.getBookId()).isEqualTo(bookId);
 	}
 	
 	@Test
 	void testGetBookByIdForItem_bookClientReturnsNull() {
-		CartItem item = new CartItem(null, 3L, bookId, cartId, 3000L, 3000L);
+		CartItem item = new CartItem(null, 3L, bookId, cartId, 3000L);
 		given(bookClient.getBookById(bookId)).willReturn(null);
 		
 		assertThatThrownBy(() -> cartItemService.getBookByIdForItem(item))
@@ -183,7 +182,7 @@ class CartItemServiceTest {
 	
 	@Test
 	void testGetCartItemById() {
-		CartItem saved = cartItemRepository.save(new CartItem(null, 3L, bookId, cartId, 3000L, 3000L));
+		CartItem saved = cartItemRepository.save(new CartItem(null, 3L, bookId, cartId, 3000L));
 		CartItem item = cartItemService.getCartItemById(saved.getCartItemId());
 		
 		assertThat(item).isNotNull();
@@ -213,7 +212,7 @@ class CartItemServiceTest {
 	
 	@Test
 	void testMergeGuestItemsIntoMemberCart_whenItemAlreadyExists() {
-		cartItemRepository.save(new CartItem(null, 3L, bookId, cartId, 3000L, 3000L));
+		cartItemRepository.save(new CartItem(null, 3L, bookId, cartId, 3000L));
 		
 		GuestCartItem guestItem = new GuestCartItem(bookId, 2L);
 		List<GuestCartItem> guestItems = List.of(guestItem);

@@ -167,13 +167,14 @@ class CartServiceTest {
 		given(cartRepository.save(any())).willReturn(newCart);
 		
 		doNothing().when(cartItemService).mergeGuestItemsIntoMemberCart(anyList(), eq(newCart));
-		doNothing().when(guestCartService).deleteCart(guestId);
+		doNothing().when(guestCartService).deleteGuestCartWithRetry(guestId);  // 변경된 부분
 		
 		cartService.mergeCartOnLogin(userId, guestId);
 		
 		verify(cartItemService).mergeGuestItemsIntoMemberCart(guestCart.getItems(), newCart);
-		verify(guestCartService).deleteCart(guestId);
+		verify(guestCartService).deleteGuestCartWithRetry(guestId);  // 변경된 부분
 	}
+	
 	
 	@Test
 	void testMergeCartOnLoginWithExistingMemberCart() {
@@ -189,13 +190,14 @@ class CartServiceTest {
 		given(cartRepository.findByUserId(userId)).willReturn(Optional.of(existingCart));
 		
 		doNothing().when(cartItemService).mergeGuestItemsIntoMemberCart(anyList(), eq(existingCart));
-		doNothing().when(guestCartService).deleteCart(guestId);
+		doNothing().when(guestCartService).deleteGuestCartWithRetry(guestId);  // 변경된 부분
 		
 		cartService.mergeCartOnLogin(userId, guestId);
 		
 		verify(cartItemService).mergeGuestItemsIntoMemberCart(guestCart.getItems(), existingCart);
-		verify(guestCartService).deleteCart(guestId);
+		verify(guestCartService).deleteGuestCartWithRetry(guestId);  // 변경된 부분
 	}
+	
 	
 	@Test
 	void testMergeCartOnLoginWithEmptyGuestCart() {

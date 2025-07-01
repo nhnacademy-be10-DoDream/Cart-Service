@@ -2,6 +2,8 @@ package shop.dodream.cart.util;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import shop.dodream.cart.dto.CartRequest;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,33 +33,19 @@ class CartRequestValidatorTest {
 		assertThat(result).isFalse();
 	}
 	
-	@Test
-	void shouldReturnTrue_whenUserIdIsPresent() {
+	@ParameterizedTest
+	@CsvSource({
+			"user, null",       // userId만 존재
+			"null, guest-abc",  // guestId만 존재
+			"user, guest-abc"   // 둘 다 존재
+	})
+	void shouldReturnTrue_whenAtLeastOneIdIsPresent(String userId, String guestId) {
 		CartRequest req = new CartRequest();
-		req.setUserId("user");  // userId만 있음
-		req.setGuestId(null);
+		req.setUserId("null".equals(userId) ? null : userId);
+		req.setGuestId("null".equals(guestId) ? null : guestId);
 		
 		boolean result = validator.isValid(req, null);
-		assertThat(result).isTrue();
-	}
-	
-	@Test
-	void shouldReturnTrue_whenGuestIdIsPresent() {
-		CartRequest req = new CartRequest();
-		req.setUserId(null);
-		req.setGuestId("guest-abc");
 		
-		boolean result = validator.isValid(req, null);
-		assertThat(result).isTrue();
-	}
-	
-	@Test
-	void shouldReturnTrue_whenBothArePresent() {
-		CartRequest req = new CartRequest();
-		req.setUserId("user");
-		req.setGuestId("guest-abc");
-		
-		boolean result = validator.isValid(req, null);
 		assertThat(result).isTrue();
 	}
 }

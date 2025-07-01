@@ -32,6 +32,9 @@ class GuestCartServiceTest {
 	@InjectMocks
 	private GuestCartService guestCartService;
 	
+	@Captor
+	ArgumentCaptor<GuestCart> cartCaptor;
+	
 	private final String guestId = "guest123";
 	private final String redisKey = "guest_cart:" + guestId;
 	
@@ -54,7 +57,7 @@ class GuestCartServiceTest {
 	void getCartReturnMappedItemResponse() {
 		GuestCartItem cartItem = new GuestCartItem(1L, 2L);
 		GuestCart guestCart = new GuestCart(guestId, List.of(cartItem));
-		BookDto bookDto = new BookDto(1L, "Test Book", 900L, 3000L, 10L, "test");
+		BookDto bookDto = new BookDto(1L, "Test Book", 3000L, "test");
 		
 		when(valueOperations.get(redisKey)).thenReturn(guestCart);
 		when(bookClient.getBookById(1L)).thenReturn(bookDto);
@@ -66,16 +69,14 @@ class GuestCartServiceTest {
 		assertEquals(1L, item.getBookId());
 		assertEquals("Test Book", item.getTitle());
 		assertEquals(2L, item.getQuantity());
-		assertEquals(10L, item.getStockQuantity());
-		assertEquals(900L, item.getOriginalPrice());
-		assertEquals(3000L, item.getDiscountPrice());
-		assertEquals("test", item.getImageUrl());
+		assertEquals(3000L, item.getSalePrice());
+		assertEquals("test", item.getBookUrl());
 	}
 	
 	@Test
 	void addCartItemCreateNewCartIfNotExists() {
 		GuestCartItemRequest request = new GuestCartItemRequest(1L, 2L);
-		BookDto bookDto = new BookDto(1L, "New Book", 800L, 800L, 5L, "test");
+		BookDto bookDto = new BookDto(1L, "New Book", 800L, "test");
 		
 		when(valueOperations.get(redisKey)).thenReturn(null);
 		when(bookClient.getBookById(1L)).thenReturn(bookDto);
@@ -97,7 +98,7 @@ class GuestCartServiceTest {
 		GuestCartItem existingItem = new GuestCartItem(1L, 2L);
 		GuestCart existingCart = new GuestCart(guestId, new ArrayList<>(List.of(existingItem)));
 		GuestCartItemRequest request = new GuestCartItemRequest(1L, 3L);
-		BookDto bookDto = new BookDto(1L, "Same Book", 700L, 700L, 15L, "test");
+		BookDto bookDto = new BookDto(1L, "Same Book", 700L, "test");
 		
 		when(valueOperations.get(redisKey)).thenReturn(existingCart);
 		when(bookClient.getBookById(1L)).thenReturn(bookDto);
@@ -109,7 +110,15 @@ class GuestCartServiceTest {
 		assertEquals(5L, response.getItems().get(0).getQuantity());
 		assertEquals("Same Book", response.getItems().get(0).getTitle());
 		
-		verify(valueOperations).set(eq(redisKey), any(GuestCart.class), eq(Duration.ofDays(7)));
+		ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+		
+		verify(valueOperations).set(
+				Mockito.eq(redisKey),
+				cartCaptor.capture(),
+				durationCaptor.capture()
+		);
+		
+		assertEquals(Duration.ofDays(7), durationCaptor.getValue());
 	}
 	
 	@Test
@@ -126,13 +135,57 @@ class GuestCartServiceTest {
 		assertEquals(1, cart.getItems().size());
 		assertEquals(2L, cart.getItems().get(0).getBookId());
 		
-		verify(valueOperations).set(eq(redisKey), eq(cart), eq(Duration.ofDays(7)));
+		verify(valueOperations).set(redisKey, cart, Duration.ofDays(7));
 	}
 	
 	@Test
 	void deleteCartDeleteKeyFromRedis() {
 		guestCartService.deleteCart(guestId);
 		verify(redisTemplate).delete(redisKey);
+	}
+	
+	@Test
+	void deleteGuestCartWithRetry_shouldDeleteKeyFromRedisOnFirstTry() {
+		// 성공적으로 한 번에 삭제되는 경우
+		when(redisTemplate.delete(redisKey)).thenReturn(true);
+		
+		guestCartService.deleteGuestCartWithRetry(guestId);
+		
+		verify(redisTemplate, times(1)).delete(redisKey);
+	}
+	
+	@Test
+	void deleteGuestCartWithRetry_shouldRetryOnFailureAndSucceed() {
+		// 두 번째 시도에 성공
+		when(redisTemplate.delete(redisKey))
+				.thenReturn(false) // 1st try: fail
+				.thenReturn(true); // 2nd try: success
+		
+		guestCartService.deleteGuestCartWithRetry(guestId);
+		
+		verify(redisTemplate, times(2)).delete(redisKey);
+	}
+	
+	@Test
+	void deleteGuestCartWithRetry_shouldLogErrorAfterMaxRetries() {
+		// 모두 실패하는 경우
+		when(redisTemplate.delete(redisKey)).thenReturn(false);
+		
+		guestCartService.deleteGuestCartWithRetry(guestId);
+		
+		verify(redisTemplate, times(3)).delete(redisKey);
+	}
+	
+	@Test
+	void deleteGuestCartWithRetry_shouldHandleExceptionDuringDelete() {
+		// 첫 번째 시도에서 예외 발생, 이후 성공하거나 실패는 중요하지 않음 (여기선 실패만 시뮬레이션)
+		when(redisTemplate.delete(redisKey))
+				.thenThrow(new RuntimeException("Redis down"))
+				.thenReturn(true); // 두 번째 시도에 성공하도록 설정 (원한다면 계속 실패하게 설정해도 무방)
+		
+		guestCartService.deleteGuestCartWithRetry(guestId);
+		
+		verify(redisTemplate, times(2)).delete(redisKey);
 	}
 	
 	@Test
@@ -163,7 +216,7 @@ class GuestCartServiceTest {
 		GuestCartItem existingItem = new GuestCartItem(1L, 98L); // 98
 		GuestCart cart = new GuestCart(guestId, new ArrayList<>(List.of(existingItem)));
 		GuestCartItemRequest request = new GuestCartItemRequest(1L, 5L);
-		BookDto bookDto = new BookDto(1L, "Book", 1000L, 1000L, 10L, "url");
+		BookDto bookDto = new BookDto(1L, "Book", 1000L, "url");
 		
 		when(valueOperations.get(redisKey)).thenReturn(cart);
 		when(bookClient.getBookById(1L)).thenReturn(bookDto);
@@ -185,14 +238,14 @@ class GuestCartServiceTest {
 		guestCartService.removeItem(guestId, 99L); // 없는 ID
 		
 		assertEquals(1, cart.getItems().size()); // 변경 없음
-		verify(valueOperations).set(eq(redisKey), eq(cart), eq(Duration.ofDays(7)));
+		verify(valueOperations).set(redisKey, cart, Duration.ofDays(7));
 	}
 	
 	@Test
 	void addCartItem_shouldAddNewItem_whenItemNotExists() {
 		GuestCart cart = new GuestCart(guestId, new ArrayList<>());
 		GuestCartItemRequest request = new GuestCartItemRequest(2L, 10L); // 새로운 아이템
-		BookDto bookDto = new BookDto(2L, "New Book", 1000L, 1000L, 10L, "url");
+		BookDto bookDto = new BookDto(2L, "New Book", 1000L, "url");
 		
 		when(valueOperations.get(redisKey)).thenReturn(cart);
 		when(bookClient.getBookById(2L)).thenReturn(bookDto);
@@ -218,10 +271,8 @@ class GuestCartServiceTest {
 		assertNotNull(response);
 		assertEquals(1, response.getItems().size());
 		assertNull(response.getItems().get(0).getTitle());
-		assertNull(response.getItems().get(0).getOriginalPrice());
-		assertNull(response.getItems().get(0).getDiscountPrice());
-		assertNull(response.getItems().get(0).getImageUrl());
-		assertNull(response.getItems().get(0).getStockQuantity());
+		assertNull(response.getItems().get(0).getSalePrice());
+		assertNull(response.getItems().get(0).getBookUrl());
 	}
 	
 	@Test
