@@ -65,7 +65,7 @@ public class CartItemController {
 	
 	// 게스트 장바구니 아이템 추가
 	@Operation(summary = "비회원 장바구니 항목 추가", description = "비회원 장바구니를 조회하고 장바구니 항목을 추가합니다.")
-	@PostMapping("/carts/guests/{guestId}/cart-items")
+	@PostMapping("/public/carts/{guestId}/cart-items")
 	public ResponseEntity<GuestCartResponse> addGuestCartItem(@PathVariable String guestId,@RequestBody @Valid GuestCartItemRequest request) {
 		GuestCartResponse response = guestCartService.addCartItem(guestId, request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -73,7 +73,7 @@ public class CartItemController {
 	
 	// 게스트 장바구니 아이템 도서 삭제
 	@Operation(summary = "비회원 장바구니 도서 하나 삭제", description = "비회원 장바구니를 조회하고 도서아이디로 도서를 조회 후 도서를 삭제합니다.")
-	@DeleteMapping("/carts/guests/{guestId}/cart-items/books/{bookId}")
+	@DeleteMapping("/public/carts/{guestId}/cart-items/books/{bookId}")
 	public ResponseEntity<Void> removeGuestCartItem(@PathVariable String guestId, @PathVariable Long bookId) {
 		guestCartService.removeItem(guestId,bookId);
 		return ResponseEntity.noContent().build();

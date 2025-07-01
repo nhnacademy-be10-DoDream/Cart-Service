@@ -50,7 +50,7 @@ class GuestIdUtilTest {
 		verify(response, times(1)).addCookie(argThat(cookie ->
 				                                             cookie.getName().equals("guestId") &&
 						                                             cookie.getValue().equals(result) &&
-						                                             cookie.getMaxAge() == 60 * 60 * 24 * 7 &&
+						                                             cookie.getMaxAge() == 60 * 60 * 24 * 30 &&
 						                                             cookie.getPath().equals("/")
 		));
 	}

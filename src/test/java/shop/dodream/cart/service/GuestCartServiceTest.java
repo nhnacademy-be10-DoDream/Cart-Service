@@ -90,7 +90,7 @@ class GuestCartServiceTest {
 		assertEquals(1, response.getItems().size());
 		assertEquals("New Book", response.getItems().get(0).getTitle());
 		
-		verify(valueOperations).set(eq(redisKey), any(GuestCart.class), eq(Duration.ofDays(7)));
+		verify(valueOperations).set(eq(redisKey), any(GuestCart.class), eq(Duration.ofDays(30)));
 	}
 	
 	@Test
@@ -118,7 +118,7 @@ class GuestCartServiceTest {
 				durationCaptor.capture()
 		);
 		
-		assertEquals(Duration.ofDays(7), durationCaptor.getValue());
+		assertEquals(Duration.ofDays(30), durationCaptor.getValue());
 	}
 	
 	@Test
@@ -135,7 +135,7 @@ class GuestCartServiceTest {
 		assertEquals(1, cart.getItems().size());
 		assertEquals(2L, cart.getItems().get(0).getBookId());
 		
-		verify(valueOperations).set(redisKey, cart, Duration.ofDays(7));
+		verify(valueOperations).set(redisKey, cart, Duration.ofDays(30));
 	}
 	
 	@Test
@@ -225,7 +225,7 @@ class GuestCartServiceTest {
 		
 		assertEquals(20L, response.getItems().get(0).getQuantity()); // capped
 		
-		verify(valueOperations).set(eq(redisKey), any(), eq(Duration.ofDays(7)));
+		verify(valueOperations).set(eq(redisKey), any(), eq(Duration.ofDays(30)));
 	}
 	
 	@Test
@@ -238,7 +238,7 @@ class GuestCartServiceTest {
 		guestCartService.removeItem(guestId, 99L); // 없는 ID
 		
 		assertEquals(1, cart.getItems().size()); // 변경 없음
-		verify(valueOperations).set(redisKey, cart, Duration.ofDays(7));
+		verify(valueOperations).set(redisKey, cart, Duration.ofDays(30));
 	}
 	
 	@Test
@@ -256,7 +256,7 @@ class GuestCartServiceTest {
 		assertEquals(10L, response.getItems().get(0).getQuantity());
 		assertEquals(2L, response.getItems().get(0).getBookId());
 		
-		verify(valueOperations).set(eq(redisKey), any(), eq(Duration.ofDays(7)));
+		verify(valueOperations).set(eq(redisKey), any(), eq(Duration.ofDays(30)));
 	}
 	
 	@Test
