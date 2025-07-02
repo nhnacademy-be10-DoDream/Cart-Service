@@ -18,6 +18,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -83,7 +84,17 @@ class CartItemControllerTest {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.quantity").value(quantity));
 	}
-
+	
+	@Test
+	void removeCartItem_shouldReturnNoContent() throws Exception {
+		Long cartItemId = 1L;
+		
+		mockMvc.perform(delete("/carts/cart-items/{cartItemId}", cartItemId))
+				.andExpect(status().isNoContent());
+		
+		verify(cartItemService).removeCartItem(cartItemId);
+	}
+	
 	@Test
 	void removeCartItemReturnNoContent() throws Exception {
 		mockMvc.perform(delete("/carts/{cartId}/cart-items/books/{bookId}", 1L, 1L))
@@ -109,7 +120,7 @@ class CartItemControllerTest {
 
 		given(guestCartService.addCartItem(eq(guestId), any(GuestCartItemRequest.class))).willReturn(response);
 
-		mockMvc.perform(post("/carts/guests/{guestId}/cart-items", guestId)
+		mockMvc.perform(post("/public/carts/{guestId}/cart-items", guestId)
 				                .contentType(MediaType.APPLICATION_JSON)
 				                .content(objectMapper.writeValueAsString(request)))
 				.andExpect(status().isCreated())
@@ -126,7 +137,7 @@ class CartItemControllerTest {
 
 	@Test
 	void removeGuestCartItemReturnNoContent() throws Exception {
-		mockMvc.perform(delete("/carts/guests/{guestId}/cart-items/books/{bookId}", "guest123", 10L))
+		mockMvc.perform(delete("/public/carts/{guestId}/cart-items/books/{bookId}", "guest123", 10L))
 				.andExpect(status().isNoContent());
 	}
 

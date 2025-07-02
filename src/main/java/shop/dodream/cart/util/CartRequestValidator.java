@@ -13,10 +13,6 @@ public class CartRequestValidator implements ConstraintValidator<ValidCartReques
 	@Override
 	public boolean isValid(CartRequest value, ConstraintValidatorContext context) {
 		if (value == null) return false;
-		
-		boolean hasUserId = value.getUserId() != null;
-		boolean hasGuestId = StringUtils.hasText(value.getGuestId());
-		
-		return hasUserId || hasGuestId;
+		return StringUtils.hasText(value.getGuestId());
 	}
 }

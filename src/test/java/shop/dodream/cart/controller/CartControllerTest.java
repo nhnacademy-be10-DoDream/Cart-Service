@@ -66,7 +66,7 @@ class CartControllerTest {
 		GuestCartResponse response = new GuestCartResponse(guestId, List.of());
 		when(guestCartService.getCart(guestId)).thenReturn(response);
 
-		mockMvc.perform(get("/carts/guests"))
+		mockMvc.perform(get("/public/carts"))
 				.andExpect(status().isOk())
 				.andExpect(cookie().exists("guestId"));
 	}
@@ -78,7 +78,7 @@ class CartControllerTest {
 		when(guestIdUtil.getOrCreateGuestId(any(), any())).thenReturn(guestId);
 		when(guestCartService.getCart(guestId)).thenReturn(response);
 
-		mockMvc.perform(get("/carts/guests")
+		mockMvc.perform(get("/public/carts")
 				                .cookie(new Cookie("guestId", guestId)))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.guestId").value(guestId));
@@ -90,7 +90,7 @@ class CartControllerTest {
 
 		when(cartService.getCartByGuestId(guestId)).thenReturn(Optional.of(response));
 
-		mockMvc.perform(get("/carts/guests/{guestId}", guestId))
+		mockMvc.perform(get("/public/carts/{guestId}", guestId))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.cartId").value(2L));
 	}
@@ -100,15 +100,15 @@ class CartControllerTest {
 		CartResponse response = new CartResponse(10L, userId, null, List.of());
 
 		when(cartService.saveCart(userId, null)).thenReturn(response);
-
+		
 		mockMvc.perform(post("/carts")
 				                .contentType(MediaType.APPLICATION_JSON)
+				                .header("X-USER-ID", "user-abc") // userId를 헤더로 전달
 				                .content("""
-                            {
-                              "userId": "user-abc",
-                              "guestId": null
-                            }
-                        """))
+									{
+										"guestId": null
+									}
+								"""))
 				.andExpect(status().isCreated())
 				.andExpect(jsonPath("$.cartId").value(10L));
 	}

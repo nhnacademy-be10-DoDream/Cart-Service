@@ -26,7 +26,6 @@ class CartRequestValidatorTest {
 	@Test
 	void shouldReturnFalse_whenBothUserIdAndGuestIdAreMissing() {
 		CartRequest req = new CartRequest();
-		req.setUserId(null);
 		req.setGuestId(null);
 		
 		boolean result = validator.isValid(req, null);
@@ -35,17 +34,29 @@ class CartRequestValidatorTest {
 	
 	@ParameterizedTest
 	@CsvSource({
-			"user, null",       // userId만 존재
-			"null, guest-abc",  // guestId만 존재
-			"user, guest-abc"   // 둘 다 존재
+			"guest-abc",  // guestId만 존재
 	})
-	void shouldReturnTrue_whenAtLeastOneIdIsPresent(String userId, String guestId) {
+	void shouldReturnTrue_whenGuestIdIsPresent(String guestId) {
 		CartRequest req = new CartRequest();
-		req.setUserId("null".equals(userId) ? null : userId);
-		req.setGuestId("null".equals(guestId) ? null : guestId);
+		req.setGuestId(guestId);
 		
 		boolean result = validator.isValid(req, null);
 		
 		assertThat(result).isTrue();
+	}
+	
+	@ParameterizedTest
+	@CsvSource({
+			"''",     // 빈 문자열
+			"'  '",   // 공백 문자열
+			"null"    // 문자열 "null"
+	})
+	void shouldReturnFalse_whenGuestIdIsInvalid(String guestId) {
+		CartRequest req = new CartRequest();
+		req.setGuestId("null".equals(guestId) ? null : guestId);
+		
+		boolean result = validator.isValid(req, null);
+		
+		assertThat(result).isFalse();
 	}
 }

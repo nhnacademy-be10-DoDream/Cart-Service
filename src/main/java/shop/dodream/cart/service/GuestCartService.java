@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 public class GuestCartService {
 	
 	private static final String REDIS_KEY_PREFIX = "guest_cart:";
-	private static final Duration CART_EXPIRATION = Duration.ofDays(7);
+	private static final Duration CART_EXPIRATION = Duration.ofDays(30);
 	private static final int MAX_ITEM_COUNT = 20;
 	private static final int MAX_RETRY = 3;
 	private static final long RETRY_DELAY_MS = 500;
