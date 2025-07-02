@@ -15,22 +15,18 @@ public class GuestCartItemResponse {
 	@NotNull
 	@Min(1)
 	private Long quantity;
-	private Long stockQuantity;
-	private Long originalPrice;
-	private Long discountPrice;
-	private String imageUrl;
+	private Long salePrice;
+	private String bookUrl;
 	
 	
 	public static GuestCartItemResponse of(GuestCartItem item, BookDto book) {
 		
 		return new GuestCartItemResponse(
 				item.getBookId(),
-				book.getTitle(),
+				book != null ? book.getTitle() : null,
 				item.getQuantity(),
-				book.getStockQuantity(),
-				book.getOriginalPrice(),
-				book.getDiscountPrice(),
-				book.getImageUrl()
+				book != null ? book.getSalePrice() : null,
+				book != null ? book.getBookUrl() : null
 		);
 	}
 }
