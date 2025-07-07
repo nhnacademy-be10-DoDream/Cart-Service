@@ -6,6 +6,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import shop.dodream.cart.client.BookClient;
 import shop.dodream.cart.dto.*;
+import shop.dodream.cart.exception.DataNotFoundException;
+
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -70,6 +72,27 @@ public class GuestCartService {
 	
 	public void deleteCart(String guestId) {
 		redisTemplate.delete(buildKey(guestId));
+	}
+	
+	public GuestCartResponse updateQuantity(String guestId, Long bookId, Long newQuantity) {
+		if (newQuantity == null || newQuantity < 1 || newQuantity > MAX_ITEM_COUNT) {
+			throw new IllegalArgumentException("수량은 1~" + MAX_ITEM_COUNT + " 사이여야 합니다.");
+		}
+		
+		GuestCart cart = fetchCart(guestId);
+		
+		Optional<GuestCartItem> itemOptional = cart.getItems().stream()
+				                                       .filter(item -> item.getBookId().equals(bookId))
+				                                       .findFirst();
+		
+		if (itemOptional.isEmpty()) {
+			throw new DataNotFoundException("해당 도서가 장바구니에 존재하지 않습니다.");
+		}
+		
+		itemOptional.get().setQuantity(newQuantity);
+		
+		saveCart(guestId, cart);
+		return buildGuestCartResponse(cart);
 	}
 	
 	public GuestCart getRawCart(String guestId) {

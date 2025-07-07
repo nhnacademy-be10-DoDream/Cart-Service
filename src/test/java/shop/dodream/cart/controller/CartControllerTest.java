@@ -104,11 +104,7 @@ class CartControllerTest {
 		mockMvc.perform(post("/carts")
 				                .contentType(MediaType.APPLICATION_JSON)
 				                .header("X-USER-ID", "user-abc") // userId를 헤더로 전달
-				                .content("""
-									{
-										"guestId": null
-									}
-								"""))
+				                .param("guestId", (String) null)) // guestId는 @RequestParam으로 전달
 				.andExpect(status().isCreated())
 				.andExpect(jsonPath("$.cartId").value(10L));
 	}

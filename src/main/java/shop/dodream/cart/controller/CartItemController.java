@@ -48,7 +48,7 @@ public class CartItemController {
 	
 	// 장바구니 아이템 하나 삭제
 	@Operation(summary = "장바구니 항목 삭제", description = "장바구니의 항목 단건 삭제합니다.")
-	@DeleteMapping("/carts/cart-items/{cartItemId}")
+	@DeleteMapping("/carts/{cartId}/cart-items/{cartItemId}")
 	public ResponseEntity<Void> removeCartItem(@PathVariable Long cartItemId) {
 		cartItemService.removeCartItem(cartItemId);
 		return ResponseEntity.noContent().build();
@@ -61,23 +61,6 @@ public class CartItemController {
 		cartItemService.removeAllCartItems(cartId);
 		return ResponseEntity.noContent().build();
 	}
-	
-	// 게스트 장바구니 아이템 추가
-	@Operation(summary = "비회원 장바구니 항목 추가", description = "비회원 장바구니를 조회하고 장바구니 항목을 추가합니다.")
-	@PostMapping("/public/carts/{guestId}/cart-items")
-	public ResponseEntity<GuestCartResponse> addGuestCartItem(@PathVariable String guestId,@RequestBody @Valid GuestCartItemRequest request) {
-		GuestCartResponse response = guestCartService.addCartItem(guestId, request);
-		return ResponseEntity.status(HttpStatus.CREATED).body(response);
-	}
-	
-	// 게스트 장바구니 아이템 도서 삭제
-	@Operation(summary = "비회원 장바구니 도서 하나 삭제", description = "비회원 장바구니를 조회하고 도서아이디로 도서를 조회 후 도서를 삭제합니다.")
-	@DeleteMapping("/public/carts/{guestId}/cart-items/books/{bookId}")
-	public ResponseEntity<Void> removeGuestCartItem(@PathVariable String guestId, @PathVariable Long bookId) {
-		guestCartService.removeItem(guestId,bookId);
-		return ResponseEntity.noContent().build();
-	}
-	
 	
 	// 특정 책 아이템만 삭제
 	@Operation(summary = "특정 책 아이템만 삭제", description = "장바구니를 조회 후 도서 아이디로 장바구니 항목에서 조회 후 삭제합니다.")
@@ -103,10 +86,33 @@ public class CartItemController {
 	
 	// 특정 장바구니 항목 단건 조회
 	@Operation(summary = "특정 장바구니 항목 단건 조회", description = "장바구니에서 특정 장바구니 항목을 단건 조회합니다.")
-	@GetMapping("/cart-items/{cartItemId}")
+	@GetMapping("/carts/{cartId}/cart-items/{cartItemId}")
 	public ResponseEntity<CartItemResponse> getCartItem(@PathVariable Long cartItemId) {
 		CartItem item = cartItemService.getCartItemById(cartItemId);
 		BookDto book = cartItemService.getBookByIdForItem(item);
 		return ResponseEntity.ok(CartItemResponse.of(item, book));
+	}
+	
+	
+	// 게스트 장바구니 아이템 도서 삭제
+	@Operation(summary = "비회원 장바구니 도서 하나 삭제", description = "비회원 장바구니를 조회하고 도서아이디로 도서를 조회 후 도서를 삭제합니다.")
+	@DeleteMapping("/public/carts/{guestId}/cart-items/books/{bookId}")
+	public ResponseEntity<Void> removeGuestCartItem(@PathVariable String guestId, @PathVariable Long bookId) {
+		guestCartService.removeItem(guestId,bookId);
+		return ResponseEntity.noContent().build();
+	}
+	
+	// 게스트 장바구니 아이템 추가
+	@Operation(summary = "비회원 장바구니 항목 추가", description = "비회원 장바구니를 조회하고 장바구니 항목을 추가합니다.")
+	@PostMapping("/public/carts/{guestId}/cart-items")
+	public ResponseEntity<GuestCartResponse> addGuestCartItem(@PathVariable String guestId,@RequestBody @Valid GuestCartItemRequest request) {
+		GuestCartResponse response = guestCartService.addCartItem(guestId, request);
+		return ResponseEntity.status(HttpStatus.CREATED).body(response);
+	}
+	
+	@PutMapping("/public/carts/{guestId}/quantity")
+	public ResponseEntity<GuestCartResponse> updateGuestCartItemQuantity(@PathVariable String guestId, @RequestBody @Valid GuestCartItemRequest request) {
+		GuestCartResponse response = guestCartService.updateQuantity(guestId,request.getBookId(),request.getQuantity());
+		return ResponseEntity.ok(response);
 	}
 }
