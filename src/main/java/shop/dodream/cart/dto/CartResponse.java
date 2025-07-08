@@ -14,7 +14,6 @@ import java.util.List;
 public class CartResponse {
 	private Long cartId;
 	private String userId;
-	private String guestId;
 	private List<CartItemResponse> items;
 	
 	
@@ -22,7 +21,6 @@ public class CartResponse {
 		return new CartResponse(
 				cart.getCartId(),
 				cart.getUserId(),
-				cart.getGuestId(),
 				new ArrayList<>()
 		);
 	}
@@ -31,7 +29,6 @@ public class CartResponse {
 		return new CartResponse(
 				cart.getCartId(),
 				cart.getUserId(),
-				cart.getGuestId(),
 				items
 		);
 	}

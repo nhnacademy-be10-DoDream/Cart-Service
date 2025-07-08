@@ -44,18 +44,15 @@ public class CartController {
 	// 게스트Id가 있을경우 조회
 	@Operation(summary = "비회원 장바구니 조회(비회원 ID가 존재할 때)", description = "비회원 장바구니를 조회합니다.")
 	@GetMapping("/public/carts/{guestId}")
-	public ResponseEntity<CartResponse> getGuestCart(@PathVariable String guestId) {
-		Optional<CartResponse> cartResponse = cartService.getCartByGuestId(guestId);
-		return cartResponse
-				       .map(ResponseEntity::ok)
-				       .orElse(ResponseEntity.notFound().build());
+	public ResponseEntity<GuestCartResponse> getGuestCart(@PathVariable String guestId) {
+		GuestCartResponse guestCartResponse = guestCartService.getCart(guestId);
+		return ResponseEntity.ok(guestCartResponse);
 	}
 	// 장바구니 생성
 	@Operation(summary = "장바구니 생성", description = "장바구니를 생성합니다.")
 	@PostMapping("/carts")
-	public ResponseEntity<CartResponse> createCart(@RequestHeader(value = "X-USER-ID", required = false) String userId,
-	                                               @RequestParam(value = "guestId", required = false) String guestId) {
-		CartResponse response = cartService.saveCart(userId, guestId);
+	public ResponseEntity<CartResponse> createCart(@RequestHeader(value = "X-USER-ID", required = false) String userId) {
+		CartResponse response = cartService.saveCart(userId);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 	// 장바구니 삭제
