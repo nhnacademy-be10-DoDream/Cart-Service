@@ -17,8 +17,6 @@ public class Cart {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long cartId;
-	//회원일 경우
+
 	private String userId;
-	//비회원일 경우
-	private String guestId;
 }
