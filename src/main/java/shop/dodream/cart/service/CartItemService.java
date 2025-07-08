@@ -9,6 +9,7 @@ import shop.dodream.cart.entity.Cart;
 import shop.dodream.cart.entity.CartItem;
 import shop.dodream.cart.exception.DataNotFoundException;
 import shop.dodream.cart.repository.CartItemRepository;
+import shop.dodream.cart.repository.CartRepository;
 
 import java.util.List;
 import java.util.Map;
@@ -20,10 +21,11 @@ import java.util.stream.Collectors;
 public class CartItemService {
 	private final CartItemRepository cartItemRepository;
 	private final BookClient bookClient;
+	private final CartRepository cartRepository;
 	
 	@Transactional(readOnly = true)
 	public List<CartItemResponse> getCartItems(Long cartId) {
-		List<CartItem> items = cartItemRepository.findByCartId(cartId);
+		List<CartItem> items = cartItemRepository.findByCart_CartId(cartId);
 		
 		List<Long> bookIds = items.stream()
 				                     .map(CartItem::getBookId)
@@ -49,7 +51,9 @@ public class CartItemService {
 	
 	@Transactional
 	public CartItemResponse addCartItem(CartItemRequest request) {
-		CartItem existing = cartItemRepository.findByCartIdAndBookId(request.getCartId(), request.getBookId());
+		Cart cart = cartRepository.findById(request.getCartId())
+				            .orElseThrow(() -> new DataNotFoundException("Cart not found with id: " + request.getCartId()));
+		CartItem existing = cartItemRepository.findByCart_CartIdAndBookId(request.getCartId(), request.getBookId());
 		if (existing != null) {
 			existing.setQuantity(existing.getQuantity() + request.getQuantity());
 			CartItem updated = cartItemRepository.save(existing);
@@ -63,7 +67,7 @@ public class CartItemService {
 		BookDto book = getBookByIdForItem(item);
 		
 		
-		item.setCartId(request.getCartId());
+		item.setCart(cart);
 		item.setQuantity(request.getQuantity());
 		item.setSalePrice(book.getSalePrice());
 		
@@ -94,25 +98,25 @@ public class CartItemService {
 	
 	@Transactional
 	public void removeAllCartItems(Long cartId) {
-		List<CartItem> items = cartItemRepository.findByCartId(cartId);
+		List<CartItem> items = cartItemRepository.findByCart_CartId(cartId);
 		if (items.isEmpty()) {
 			return;
 		}
-		cartItemRepository.deleteByCartId(cartId);
+		cartItemRepository.deleteByCart_CartId(cartId);
 	}
 	
 	@Transactional
 	public void removeCartItemByBookId(Long cartId, Long bookId) {
-		CartItem item = cartItemRepository.findByCartIdAndBookId(cartId, bookId);
+		CartItem item = cartItemRepository.findByCart_CartIdAndBookId(cartId, bookId);
 		if (item == null) {
 			throw new DataNotFoundException("No cart item found for cartId " + cartId + " and bookId " + bookId);
 		}
-		cartItemRepository.deleteByCartIdAndBookId(cartId, bookId);
+		cartItemRepository.deleteByCart_CartIdAndBookId(cartId, bookId);
 	}
 	
 	@Transactional(readOnly = true)
 	public CartItem getCartItemByBookId(Long cartId, Long bookId) {
-		CartItem item = cartItemRepository.findByCartIdAndBookId(cartId, bookId);
+		CartItem item = cartItemRepository.findByCart_CartIdAndBookId(cartId, bookId);
 		if (item == null) {
 			throw new DataNotFoundException("CartItem not found for cartId " + cartId + " and bookId " + bookId);
 		}
@@ -138,13 +142,13 @@ public class CartItemService {
 				throw new DataNotFoundException("Book not found for ID: " + bookId);
 			}
 			
-			CartItem existing = cartItemRepository.findByCartIdAndBookId(memberCart.getCartId(), bookId);
+			CartItem existing = cartItemRepository.findByCart_CartIdAndBookId(memberCart.getCartId(), bookId);
 			if (existing != null) {
 				existing.setQuantity(existing.getQuantity() + guestItem.getQuantity());
 				cartItemRepository.save(existing);
 			} else {
 				CartItem newItem = new CartItem();
-				newItem.setCartId(memberCart.getCartId());
+				newItem.setCart(memberCart);
 				newItem.setBookId(bookId);
 				newItem.setQuantity(guestItem.getQuantity());
 				newItem.setSalePrice(book.getSalePrice());
