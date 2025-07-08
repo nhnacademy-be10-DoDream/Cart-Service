@@ -13,7 +13,7 @@ import shop.dodream.cart.service.CartService;
 import shop.dodream.cart.service.GuestCartService;
 import shop.dodream.cart.util.GuestIdUtil;
 
-import java.util.Optional;
+
 
 
 @RestController
@@ -30,7 +30,7 @@ public class CartController {
 	public ResponseEntity<CartResponse> getUserCart(@RequestHeader("X-USER-ID") String userId) {
 		return cartService.getCartByUserId(userId)
 				       .map(ResponseEntity::ok)
-				       .orElse(ResponseEntity.notFound().build());
+				       .orElse(createCart(userId));
 	}
 	// 게스트Id가 없이 조회할 경우 생성 후 조회
 	@Operation(summary = "비회원 장바구니 조회", description = "비회원의 장바구니를 조회합니다, 비회원 장바구니가 없을 경우 생성 후 조회합니다.")
@@ -38,8 +38,8 @@ public class CartController {
 	public ResponseEntity<GuestCartResponse> getGuestCart(HttpServletRequest request,
 	                                                      HttpServletResponse response) {
 		String guestId = guestIdUtil.getOrCreateGuestId(request, response);
-		GuestCartResponse cartResponse = guestCartService.getCart(guestId);
-		return ResponseEntity.ok(cartResponse);
+		GuestCartResponse guestCartResponse = guestCartService.getCart(guestId);
+		return ResponseEntity.ok(guestCartResponse);
 	}
 	// 게스트Id가 있을경우 조회
 	@Operation(summary = "비회원 장바구니 조회(비회원 ID가 존재할 때)", description = "비회원 장바구니를 조회합니다.")
