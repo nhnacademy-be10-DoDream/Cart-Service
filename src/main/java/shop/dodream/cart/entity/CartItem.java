@@ -1,9 +1,6 @@
 package shop.dodream.cart.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -25,13 +22,15 @@ public class CartItem {
 	//도서고유ID
 	@NotNull
 	private Long bookId;
-	//카드고유ID
-	private Long cartId;
+	//카트고유ID
+	@ManyToOne
+	@JoinColumn(name = "cart_id", nullable = false)
+	private Cart cart;
 	//정가
 	private Long salePrice;
 
-	public CartItem(Long cartId, Long bookId) {
-		this.cartId = cartId;
+	public CartItem(Cart cart, Long bookId) {
+		this.cart = cart;
 		this.bookId = bookId;
 	}
 }

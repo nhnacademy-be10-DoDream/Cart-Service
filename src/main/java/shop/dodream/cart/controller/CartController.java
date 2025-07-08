@@ -3,12 +3,10 @@ package shop.dodream.cart.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import shop.dodream.cart.dto.CartRequest;
 import shop.dodream.cart.dto.CartResponse;
 import shop.dodream.cart.dto.GuestCartResponse;
 import shop.dodream.cart.service.CartService;
@@ -55,8 +53,9 @@ public class CartController {
 	// 장바구니 생성
 	@Operation(summary = "장바구니 생성", description = "장바구니를 생성합니다.")
 	@PostMapping("/carts")
-	public ResponseEntity<CartResponse> createCart(@RequestHeader(value = "X-USER-ID", required = false) String userId,@RequestBody @Valid CartRequest request) {
-		CartResponse response = cartService.saveCart(userId, request.getGuestId());
+	public ResponseEntity<CartResponse> createCart(@RequestHeader(value = "X-USER-ID", required = false) String userId,
+	                                               @RequestParam(value = "guestId", required = false) String guestId) {
+		CartResponse response = cartService.saveCart(userId, guestId);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 	// 장바구니 삭제
