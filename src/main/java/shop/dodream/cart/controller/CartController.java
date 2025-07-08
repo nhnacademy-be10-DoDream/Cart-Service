@@ -25,13 +25,12 @@ public class CartController {
 	private final GuestIdUtil guestIdUtil;
 	
 	// 회원 장바구니 조회
-	@Operation(summary = "회원 장바구니 조회", description = "회원의 장바구니를 조회합니다.")
+	@Operation(summary = "회원 장바구니 조회", description = "회원의 장바구니를 조회합니다.회원의 장바구니가 없다면 생성하고 조회합니다.")
 	@GetMapping("/carts/users")
 	public ResponseEntity<CartResponse> getUserCart(@RequestHeader("X-USER-ID") String userId) {
-		return cartService.getCartByUserId(userId)
-				       .map(ResponseEntity::ok)
-				       .orElse(createCart(userId));
+		return ResponseEntity.ok(cartService.getOrCreateUserCart(userId));
 	}
+	
 	// 게스트Id가 없이 조회할 경우 생성 후 조회
 	@Operation(summary = "비회원 장바구니 조회", description = "비회원의 장바구니를 조회합니다, 비회원 장바구니가 없을 경우 생성 후 조회합니다.")
 	@GetMapping("/public/carts")
@@ -47,13 +46,6 @@ public class CartController {
 	public ResponseEntity<GuestCartResponse> getGuestCart(@PathVariable String guestId) {
 		GuestCartResponse guestCartResponse = guestCartService.getCart(guestId);
 		return ResponseEntity.ok(guestCartResponse);
-	}
-	// 장바구니 생성
-	@Operation(summary = "장바구니 생성", description = "장바구니를 생성합니다.")
-	@PostMapping("/carts")
-	public ResponseEntity<CartResponse> createCart(@RequestHeader(value = "X-USER-ID", required = false) String userId) {
-		CartResponse response = cartService.saveCart(userId);
-		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 	// 장바구니 삭제
 	@Operation(summary = "장바구니 삭제", description = "장바구니를 삭제합니다.")

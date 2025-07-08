@@ -1,6 +1,7 @@
 package shop.dodream.cart.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -22,25 +23,18 @@ public class CartService {
 	private final GuestCartService guestCartService;
 	
 	@Transactional
-	public CartResponse saveCart(String userId) {
-		if (!StringUtils.hasText(userId) ) {
-			throw new MissingIdentifierException("userId must be provided.");
+	public CartResponse getOrCreateUserCart(String userId) {
+		Optional<Cart> cartOpt = cartRepository.findByUserId(userId);
+		if (cartOpt.isPresent()) return CartResponse.of(cartOpt.get());
+		try {
+			Cart newCart = new Cart();
+			newCart.setUserId(userId);
+			return CartResponse.of(cartRepository.save(newCart));
+		} catch (DataIntegrityViolationException e) {
+			return cartRepository.findByUserId(userId)
+					       .map(CartResponse::of)
+					       .orElseThrow(() -> new IllegalStateException("Cart creation failed and cart not found."));
 		}
-		Cart cart = new Cart();
-		cart.setUserId(userId);
-		return CartResponse.of(cartRepository.save(cart));
-	}
-	
-	@Transactional(readOnly = true)
-	public Optional<CartResponse> getCartByUserId(String userId) {
-		if (!StringUtils.hasText(userId)) {
-			throw new MissingIdentifierException("userId must be provided.");
-		}
-		return cartRepository.findByUserId(userId)
-				       .map(cart -> {
-					       List<CartItemResponse> itemResponses = cartItemService.getCartItems(cart.getCartId());
-					       return CartResponse.of(cart, itemResponses);
-				       });
 	}
 	
 	@Transactional
@@ -76,5 +70,6 @@ public class CartService {
 		// 4. Redis 비회원 장바구니 삭제
 		guestCartService.deleteGuestCartWithRetry(guestId);
 	}
+	
 	
 }
