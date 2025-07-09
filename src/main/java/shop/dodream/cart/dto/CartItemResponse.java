@@ -11,7 +11,7 @@ import shop.dodream.cart.entity.CartItem;
 public class CartItemResponse {
 	private Long cartItemId;
 	private Long bookId;
-	private String bookTitle;
+	private String title;
 	private Long salePrice;
 	@NotNull
 	@Min(1)
