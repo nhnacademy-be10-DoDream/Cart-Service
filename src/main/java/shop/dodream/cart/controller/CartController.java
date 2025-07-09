@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import shop.dodream.cart.dto.CartResponse;
@@ -46,6 +45,13 @@ public class CartController {
 	public ResponseEntity<GuestCartResponse> getGuestCart(@PathVariable String guestId) {
 		GuestCartResponse guestCartResponse = guestCartService.getCart(guestId);
 		return ResponseEntity.ok(guestCartResponse);
+	}
+	//비회원 장바구니 삭제
+	@Operation(summary = "비회원 장바구니 삭제",description = "비회원 장바구니를 삭제합니다.")
+	@DeleteMapping("/public/carts/{guestId}")
+	public ResponseEntity<Void> deleteGuestCart(@PathVariable String guestId) {
+		guestCartService.deleteCart(guestId);
+		return ResponseEntity.noContent().build();
 	}
 	// 장바구니 삭제
 	@Operation(summary = "장바구니 삭제", description = "장바구니를 삭제합니다.")
