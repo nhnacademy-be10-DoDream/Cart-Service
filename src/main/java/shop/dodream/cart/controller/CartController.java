@@ -47,6 +47,13 @@ public class CartController {
 		GuestCartResponse guestCartResponse = guestCartService.getCart(guestId);
 		return ResponseEntity.ok(guestCartResponse);
 	}
+	//비회원 장바구니 삭제
+	@Operation(summary = "비회원 장바구니 삭제",description = "비회원 장바구니를 삭제합니다.")
+	@DeleteMapping("/public/carts/{guestId}")
+	public ResponseEntity<Void> deleteGuestCart(@PathVariable String guestId) {
+		guestCartService.deleteCart(guestId);
+		return ResponseEntity.noContent().build();
+	}
 	// 장바구니 삭제
 	@Operation(summary = "장바구니 삭제", description = "장바구니를 삭제합니다.")
 	@DeleteMapping("/carts/{cartId}")
