@@ -62,11 +62,9 @@ public class CartController {
 	}
 	// 비회원 장바구니 통합
 	@Operation(summary = "장바구니 병합", description = "비회원 장바구니를 회원 장바구니를 생성 후 병합하고 비회원 장바구니를 지웁니다.")
-	@PostMapping("/carts/merge")
+	@PostMapping("/carts/merge/{guestId}")
 	public ResponseEntity<Void> mergeCart(@RequestHeader("X-USER-ID") String userId,
-	                                      HttpServletRequest request,
-	                                      HttpServletResponse response) {
-		String guestId = guestIdUtil.getOrCreateGuestId(request, response);
+	                                      @PathVariable String guestId) {
 		cartService.mergeCartOnLogin(userId, guestId);
 		return ResponseEntity.ok().build();
 	}
