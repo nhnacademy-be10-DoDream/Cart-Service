@@ -7,7 +7,7 @@ import shop.dodream.cart.dto.BookListResponseRecord;
 
 import java.util.List;
 
-@FeignClient(name = "bookClient")
+@FeignClient(name = "book")
 public interface BookClient {
 	
 	@GetMapping("/public/books")
