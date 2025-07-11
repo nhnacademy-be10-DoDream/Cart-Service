@@ -135,16 +135,6 @@ public class GuestCartService {
 		return new GuestCartResponse(cart.getGuestId(), itemResponses);
 	}
 	
-	private BookDetailResponse safeGetBook(Long bookId) {
-		try {
-			return bookClient.getBookById(bookId);
-		} catch (Exception e) {
-			// todo 로그 구현 필요
-			log.error(e.getMessage());
-			return null;
-		}
-	}
-	
 	private void validateRequest(GuestCartItemRequest request) {
 		if (request.getQuantity() <= 0) {
 			throw new IllegalArgumentException("수량은 1개 이상이어야 합니다.");
