@@ -80,7 +80,7 @@ public class CartItemController {
 			@PathVariable Long cartId,
 			@PathVariable Long bookId) {
 		CartItem item = cartItemService.getCartItemByBookId(cartId, bookId);
-		BookDto book = cartItemService.getBookByIdForItem(item);
+		BookDetailResponse book = cartItemService.getBookByIdForItem(item);
 		return ResponseEntity.ok(CartItemResponse.of(item, book));
 	}
 	
@@ -89,7 +89,7 @@ public class CartItemController {
 	@GetMapping("/carts/{cartId}/cart-items/{cartItemId}")
 	public ResponseEntity<CartItemResponse> getCartItem(@PathVariable Long cartItemId) {
 		CartItem item = cartItemService.getCartItemById(cartItemId);
-		BookDto book = cartItemService.getBookByIdForItem(item);
+		BookDetailResponse book = cartItemService.getBookByIdForItem(item);
 		return ResponseEntity.ok(CartItemResponse.of(item, book));
 	}
 	

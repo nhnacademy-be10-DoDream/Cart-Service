@@ -1,26 +1,5 @@
 package shop.dodream.cart.service;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.transaction.annotation.Transactional;
-import shop.dodream.cart.client.BookClient;
-import shop.dodream.cart.dto.BookDto;
-import shop.dodream.cart.dto.CartItemRequest;
-import shop.dodream.cart.dto.CartItemResponse;
-import shop.dodream.cart.dto.GuestCartItem;
-import shop.dodream.cart.entity.Cart;
-import shop.dodream.cart.entity.CartItem;
-import shop.dodream.cart.exception.DataNotFoundException;
-import shop.dodream.cart.repository.CartItemRepository;
-import java.util.List;
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.BDDMockito.given;
-
-
 
 //@SpringBootTest
 //@Transactional
