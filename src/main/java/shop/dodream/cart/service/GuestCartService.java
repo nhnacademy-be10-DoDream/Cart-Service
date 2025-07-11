@@ -116,18 +116,18 @@ public class GuestCartService {
 				                     .map(GuestCartItem::getBookId)
 				                     .collect(Collectors.toList());
 		
-		Map<Long, BookDto> bookMap = new HashMap<>();
+		Map<Long, BookListResponseRecord> bookMap = new HashMap<>();
 		try {
-			List<BookDto> books = bookClient.getBooksByIds(bookIds);
-			bookMap = books.stream().collect(Collectors.toMap(BookDto::getBookId, Function.identity()));
+			List<BookListResponseRecord> books = bookClient.getBooksByIds(bookIds);
+			bookMap = books.stream().collect(Collectors.toMap(BookListResponseRecord::getBookId, Function.identity()));
 		} catch (Exception e) {
 			log.error("도서 목록 조회 실패: {}", e.getMessage());
 		}
 		
-		Map<Long, BookDto> finalBookMap = bookMap;
+		Map<Long, BookListResponseRecord> finalBookMap = bookMap;
 		List<GuestCartItemResponse> itemResponses = cart.getItems().stream()
 				                                            .map(item -> {
-					                                            BookDto book = finalBookMap.get(item.getBookId());
+					                                            BookListResponseRecord book = finalBookMap.get(item.getBookId());
 					                                            return GuestCartItemResponse.of(item, book);
 				                                            })
 				                                            .toList();
@@ -135,7 +135,7 @@ public class GuestCartService {
 		return new GuestCartResponse(cart.getGuestId(), itemResponses);
 	}
 	
-	private BookDto safeGetBook(Long bookId) {
+	private BookDetailResponse safeGetBook(Long bookId) {
 		try {
 			return bookClient.getBookById(bookId);
 		} catch (Exception e) {

@@ -32,14 +32,14 @@ public class CartItemService {
 				                     .distinct()
 				                     .toList();
 		
-		List<BookDto> books = bookClient.getBooksByIds(bookIds);
+		List<BookListResponseRecord> books = bookClient.getBooksByIds(bookIds);
 		
-		Map<Long, BookDto> bookMap = books.stream()
-				                             .collect(Collectors.toMap(BookDto::getBookId, Function.identity()));
+		Map<Long, BookListResponseRecord> bookMap = books.stream()
+				                             .collect(Collectors.toMap(BookListResponseRecord::getBookId, Function.identity()));
 		
 		return items.stream()
 				       .map(item -> {
-					       BookDto book = bookMap.get(item.getBookId());
+					       BookListResponseRecord book = bookMap.get(item.getBookId());
 					       if (book == null) {
 						       throw new DataNotFoundException("도서 정보를 찾을 수 없습니다: id=" + item.getBookId());
 					       }
@@ -57,14 +57,14 @@ public class CartItemService {
 		if (existing != null) {
 			existing.setQuantity(existing.getQuantity() + request.getQuantity());
 			CartItem updated = cartItemRepository.save(existing);
-			BookDto book = getBookByIdForItem(updated);
+			BookDetailResponse book = getBookByIdForItem(updated);
 			return CartItemResponse.of(updated, book);
 		}
 		
 		CartItem item = new CartItem();
 		item.setBookId(request.getBookId());
 		
-		BookDto book = getBookByIdForItem(item);
+		BookDetailResponse book = getBookByIdForItem(item);
 		
 		
 		item.setCart(cart);
@@ -80,7 +80,7 @@ public class CartItemService {
 		CartItem item = cartItemRepository.findById(cartItemId)
 				                .orElseThrow(() -> new DataNotFoundException("Cart item to update not found"));
 		
-		BookDto book = getBookByIdForItem(item);
+		BookDetailResponse book = getBookByIdForItem(item);
 		
 		item.setQuantity(quantity);
 		item.setSalePrice(book.getSalePrice());
@@ -130,14 +130,14 @@ public class CartItemService {
 				                     .distinct()
 				                     .collect(Collectors.toList());
 		
-		List<BookDto> books = bookClient.getBooksByIds(bookIds);
-		Map<Long, BookDto> bookMap = books.stream()
-				                             .collect(Collectors.toMap(BookDto::getBookId, Function.identity()));
+		List<BookListResponseRecord> books = bookClient.getBooksByIds(bookIds);
+		Map<Long, BookListResponseRecord> bookMap = books.stream()
+				                             .collect(Collectors.toMap(BookListResponseRecord::getBookId, Function.identity()));
 		
 		// 2. 병합
 		for (GuestCartItem guestItem : guestItems) {
 			Long bookId = guestItem.getBookId();
-			BookDto book = bookMap.get(bookId);
+			BookListResponseRecord book = bookMap.get(bookId);
 			if (book == null) {
 				throw new DataNotFoundException("Book not found for ID: " + bookId);
 			}
@@ -161,11 +161,11 @@ public class CartItemService {
 		return cartItemRepository.findById(cartItemId).orElseThrow(() -> new DataNotFoundException("CartItem to get not found"));
 	}
 	
-	public BookDto getBookByIdForItem(CartItem item) {
-		BookDto bookDto = bookClient.getBookById(item.getBookId());
-		if (bookDto == null) {
+	public BookDetailResponse getBookByIdForItem(CartItem item) {
+		BookDetailResponse bookDetailResponse = bookClient.getBookById(item.getBookId());
+		if (bookDetailResponse == null) {
 			throw new DataNotFoundException("도서 정보를 찾을 수 없습니다: " + item.getBookId());
 		}
-		return bookDto;
+		return bookDetailResponse;
 	}
 }
