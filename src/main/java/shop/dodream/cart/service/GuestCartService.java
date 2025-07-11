@@ -9,9 +9,8 @@ import shop.dodream.cart.dto.*;
 import shop.dodream.cart.exception.DataNotFoundException;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -113,12 +112,26 @@ public class GuestCartService {
 	}
 	
 	private GuestCartResponse buildGuestCartResponse(GuestCart cart) {
+		List<Long> bookIds = cart.getItems().stream()
+				                     .map(GuestCartItem::getBookId)
+				                     .collect(Collectors.toList());
+		
+		Map<Long, BookDto> bookMap = new HashMap<>();
+		try {
+			List<BookDto> books = bookClient.getBooksByIds(bookIds);
+			bookMap = books.stream().collect(Collectors.toMap(BookDto::getBookId, Function.identity()));
+		} catch (Exception e) {
+			log.error("도서 목록 조회 실패: {}", e.getMessage());
+		}
+		
+		Map<Long, BookDto> finalBookMap = bookMap;
 		List<GuestCartItemResponse> itemResponses = cart.getItems().stream()
 				                                            .map(item -> {
-					                                            BookDto book = safeGetBook(item.getBookId());
+					                                            BookDto book = finalBookMap.get(item.getBookId());
 					                                            return GuestCartItemResponse.of(item, book);
 				                                            })
 				                                            .toList();
+		
 		return new GuestCartResponse(cart.getGuestId(), itemResponses);
 	}
 	
@@ -127,6 +140,7 @@ public class GuestCartService {
 			return bookClient.getBookById(bookId);
 		} catch (Exception e) {
 			// todo 로그 구현 필요
+			log.error(e.getMessage());
 			return null;
 		}
 	}

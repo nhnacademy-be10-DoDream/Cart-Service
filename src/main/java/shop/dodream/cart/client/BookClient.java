@@ -8,7 +8,7 @@ import shop.dodream.cart.dto.BookDto;
 
 import java.util.List;
 
-@FeignClient(name = "bookClient", url = "http://localhost:10320")
+@FeignClient(name = "bookClient")
 public interface BookClient {
 	
 	@GetMapping("/public/books/{bookId}")
