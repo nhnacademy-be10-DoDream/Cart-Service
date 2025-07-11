@@ -7,11 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import shop.dodream.cart.dto.*;
-import shop.dodream.cart.entity.CartItem;
 import shop.dodream.cart.service.CartItemService;
 import shop.dodream.cart.service.GuestCartService;
-
-import java.awt.print.Book;
 import java.util.List;
 
 @RestController
