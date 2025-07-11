@@ -7,10 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import shop.dodream.cart.dto.*;
-import shop.dodream.cart.entity.CartItem;
 import shop.dodream.cart.service.CartItemService;
 import shop.dodream.cart.service.GuestCartService;
-
 import java.util.List;
 
 @RestController
@@ -71,28 +69,6 @@ public class CartItemController {
 		cartItemService.removeCartItemByBookId(cartId, bookId);
 		return ResponseEntity.noContent().build();
 	}
-	
-	
-	// 장바구니 ID + 책 ID 로 아이템 하나 조회
-	@Operation(summary = "장바구니 항목 단건 조회(장바구니 아이디와 도서 아이디로)", description = "장바구니아이디와 도서아이디로 조회 후 장바구니 항목 단건 조회합니다.")
-	@GetMapping("/carts/{cartId}/cart-items/books/{bookId}")
-	public ResponseEntity<CartItemResponse> getCartItemByBookId(
-			@PathVariable Long cartId,
-			@PathVariable Long bookId) {
-		CartItem item = cartItemService.getCartItemByBookId(cartId, bookId);
-		BookDetailResponse book = cartItemService.getBookByIdForItem(item);
-		return ResponseEntity.ok(CartItemResponse.of(item, book));
-	}
-	
-	// 특정 장바구니 항목 단건 조회
-	@Operation(summary = "특정 장바구니 항목 단건 조회", description = "장바구니에서 특정 장바구니 항목을 단건 조회합니다.")
-	@GetMapping("/carts/{cartId}/cart-items/{cartItemId}")
-	public ResponseEntity<CartItemResponse> getCartItem(@PathVariable Long cartItemId) {
-		CartItem item = cartItemService.getCartItemById(cartItemId);
-		BookDetailResponse book = cartItemService.getBookByIdForItem(item);
-		return ResponseEntity.ok(CartItemResponse.of(item, book));
-	}
-	
 	
 	// 게스트 장바구니 아이템 도서 삭제
 	@Operation(summary = "비회원 장바구니 도서 하나 삭제", description = "비회원 장바구니를 조회하고 도서아이디로 도서를 조회 후 도서를 삭제합니다.")
