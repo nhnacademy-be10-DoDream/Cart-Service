@@ -11,6 +11,7 @@ import shop.dodream.cart.exception.DataNotFoundException;
 import shop.dodream.cart.repository.CartItemRepository;
 import shop.dodream.cart.repository.CartRepository;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -35,7 +36,7 @@ public class CartItemService {
 		List<BookListResponseRecord> books = bookClient.getBooksByIds(bookIds);
 		
 		Map<Long, BookListResponseRecord> bookMap = books.stream()
-				                             .collect(Collectors.toMap(BookListResponseRecord::getBookId, Function.identity()));
+				                                            .collect(Collectors.toMap(BookListResponseRecord::getBookId, Function.identity()));
 		
 		return items.stream()
 				       .map(item -> {
@@ -53,44 +54,58 @@ public class CartItemService {
 	public CartItemResponse addCartItem(CartItemRequest request) {
 		Cart cart = cartRepository.findById(request.getCartId())
 				            .orElseThrow(() -> new DataNotFoundException("Cart not found with id: " + request.getCartId()));
-		CartItem existing = cartItemRepository.findByCart_CartIdAndBookId(request.getCartId(), request.getBookId());
-		if (existing != null) {
-			existing.setQuantity(existing.getQuantity() + request.getQuantity());
-			CartItem updated = cartItemRepository.save(existing);
-			BookDetailResponse book = getBookByIdForItem(updated);
-			return CartItemResponse.of(updated, book);
+		
+		CartItem existingItem = cartItemRepository.findByCart_CartIdAndBookId(request.getCartId(), request.getBookId());
+		
+		CartItem cartItemToProcess;
+		if (existingItem != null) {
+			existingItem.setQuantity(existingItem.getQuantity() + request.getQuantity());
+			cartItemToProcess = existingItem;
+		} else {
+			cartItemToProcess = new CartItem();
+			cartItemToProcess.setBookId(request.getBookId());
+			cartItemToProcess.setCart(cart);
+			cartItemToProcess.setQuantity(request.getQuantity());
 		}
 		
-		CartItem item = new CartItem();
-		item.setBookId(request.getBookId());
+		// 도서 정보 일괄 조회 (단 건이어도 동일한 로직 사용)
+		Map<Long, BookListResponseRecord> bookMap = fetchBooksInBulk(List.of(cartItemToProcess.getBookId()));
+		BookListResponseRecord book = bookMap.get(cartItemToProcess.getBookId());
 		
-		BookDetailResponse book = getBookByIdForItem(item);
+		if (book == null) {
+			throw new DataNotFoundException("도서 정보를 찾을 수 없습니다: id=" + cartItemToProcess.getBookId());
+		}
 		
+		// 판매 가격 업데이트 후 저장
+		cartItemToProcess.setSalePrice(book.getSalePrice());
+		CartItem savedItem = cartItemRepository.save(cartItemToProcess);
 		
-		item.setCart(cart);
-		item.setQuantity(request.getQuantity());
-		item.setSalePrice(book.getSalePrice());
-		
-		CartItem saved = cartItemRepository.save(item);
-		return CartItemResponse.of(saved, book);
+		return CartItemResponse.of(savedItem, book);
 	}
 	
 	@Transactional
-	public CartItemResponse updateCartItemQuantity(Long  cartItemId, Long quantity) {
+	public CartItemResponse updateCartItemQuantity(Long cartItemId, Long quantity) {
 		CartItem item = cartItemRepository.findById(cartItemId)
 				                .orElseThrow(() -> new DataNotFoundException("Cart item to update not found"));
 		
-		BookDetailResponse book = getBookByIdForItem(item);
+		// 도서 정보 일괄 조회
+		Map<Long, BookListResponseRecord> bookMap = fetchBooksInBulk(List.of(item.getBookId()));
+		BookListResponseRecord book = bookMap.get(item.getBookId());
+		
+		if (book == null) {
+			throw new DataNotFoundException("도서 정보를 찾을 수 없습니다: id=" + item.getBookId());
+		}
 		
 		item.setQuantity(quantity);
-		item.setSalePrice(book.getSalePrice());
+		item.setSalePrice(book.getSalePrice()); // 가격 정보도 최신 데이터로 업데이트
 		CartItem updated = cartItemRepository.save(item);
+		
 		return CartItemResponse.of(updated, book);
 	}
 	
 	@Transactional
 	public void removeCartItem(Long cartItemId) {
-		if(!cartItemRepository.existsById(cartItemId)) {
+		if (!cartItemRepository.existsById(cartItemId)) {
 			throw new DataNotFoundException("CartItem to remove not found");
 		}
 		cartItemRepository.deleteById(cartItemId);
@@ -132,7 +147,7 @@ public class CartItemService {
 		
 		List<BookListResponseRecord> books = bookClient.getBooksByIds(bookIds);
 		Map<Long, BookListResponseRecord> bookMap = books.stream()
-				                             .collect(Collectors.toMap(BookListResponseRecord::getBookId, Function.identity()));
+				                                            .collect(Collectors.toMap(BookListResponseRecord::getBookId, Function.identity()));
 		
 		// 2. 병합
 		for (GuestCartItem guestItem : guestItems) {
@@ -161,11 +176,13 @@ public class CartItemService {
 		return cartItemRepository.findById(cartItemId).orElseThrow(() -> new DataNotFoundException("CartItem to get not found"));
 	}
 	
-	public BookDetailResponse getBookByIdForItem(CartItem item) {
-		BookDetailResponse bookDetailResponse = bookClient.getBookById(item.getBookId());
-		if (bookDetailResponse == null) {
-			throw new DataNotFoundException("도서 정보를 찾을 수 없습니다: " + item.getBookId());
+	private Map<Long, BookListResponseRecord> fetchBooksInBulk(List<Long> bookIds) {
+		if (bookIds == null || bookIds.isEmpty()) {
+			return Collections.emptyMap();
 		}
-		return bookDetailResponse;
+		// 제공된 BookClient의 메소드를 직접 호출합니다.
+		List<BookListResponseRecord> books = bookClient.getBooksByIds(bookIds);
+		return books.stream()
+				       .collect(Collectors.toMap(BookListResponseRecord::getBookId, java.util.function.Function.identity()));
 	}
 }
