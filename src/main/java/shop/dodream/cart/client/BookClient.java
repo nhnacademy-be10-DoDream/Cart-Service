@@ -4,7 +4,8 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
-import shop.dodream.cart.dto.BookDto;
+import shop.dodream.cart.dto.BookDetailResponse;
+import shop.dodream.cart.dto.BookListResponseRecord;
 
 import java.util.List;
 
@@ -12,7 +13,7 @@ import java.util.List;
 public interface BookClient {
 	
 	@GetMapping("/public/books/{bookId}")
-	BookDto getBookById(@PathVariable("bookId") Long id);
+	BookDetailResponse getBookById(@PathVariable("bookId") Long id);
 	@GetMapping("/public/books")
-	List<BookDto> getBooksByIds(@RequestParam("ids") List<Long> bookIds);
+	List<BookListResponseRecord> getBooksByIds(@RequestParam("ids") List<Long> bookIds);
 }

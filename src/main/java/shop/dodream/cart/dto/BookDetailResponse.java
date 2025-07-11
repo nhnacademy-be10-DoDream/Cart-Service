@@ -4,12 +4,14 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class BookDto {
+public class BookDetailResponse {
 	private Long bookId;
 	private String title;
 	private Long salePrice;
-	private String bookUrl;
+	private List<String> bookUrls;
 }
