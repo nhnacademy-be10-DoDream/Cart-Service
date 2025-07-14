@@ -10,8 +10,6 @@ import shop.dodream.cart.entity.Cart;
 import shop.dodream.cart.exception.DataNotFoundException;
 import shop.dodream.cart.exception.MissingIdentifierException;
 import shop.dodream.cart.repository.CartRepository;
-
-import java.util.List;
 import java.util.Optional;
 
 @Service
