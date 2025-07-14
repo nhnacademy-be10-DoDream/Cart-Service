@@ -28,6 +28,10 @@ public class CartItemService {
 	public List<CartItemResponse> getCartItems(Long cartId) {
 		List<CartItem> items = cartItemRepository.findByCart_CartId(cartId);
 		
+		if (items.isEmpty()) {
+			return Collections.emptyList();
+		}
+		
 		List<Long> bookIds = items.stream()
 				                     .map(CartItem::getBookId)
 				                     .distinct()
@@ -42,7 +46,7 @@ public class CartItemService {
 				       .map(item -> {
 					       BookListResponseRecord book = bookMap.get(item.getBookId());
 					       if (book == null) {
-						       throw new DataNotFoundException("도서 정보를 찾을 수 없습니다: id=" + item.getBookId());
+						       throw new DataNotFoundException("도서 목록 정보를 찾을 수 없습니다: id=" + item.getBookId());
 					       }
 					       return CartItemResponse.of(item, book);
 				       })
@@ -93,7 +97,7 @@ public class CartItemService {
 		BookListResponseRecord book = bookMap.get(item.getBookId());
 		
 		if (book == null) {
-			throw new DataNotFoundException("도서 정보를 찾을 수 없습니다: id=" + item.getBookId());
+			throw new DataNotFoundException("도서를 찾을 수 없습니다: id=" + item.getBookId());
 		}
 		
 		item.setQuantity(quantity);
@@ -129,15 +133,6 @@ public class CartItemService {
 		cartItemRepository.deleteByCart_CartIdAndBookId(cartId, bookId);
 	}
 	
-	@Transactional(readOnly = true)
-	public CartItem getCartItemByBookId(Long cartId, Long bookId) {
-		CartItem item = cartItemRepository.findByCart_CartIdAndBookId(cartId, bookId);
-		if (item == null) {
-			throw new DataNotFoundException("CartItem not found for cartId " + cartId + " and bookId " + bookId);
-		}
-		return item;
-	}
-	
 	public void mergeGuestItemsIntoMemberCart(List<GuestCartItem> guestItems, Cart memberCart) {
 		// 1. 일괄 Book 조회
 		List<Long> bookIds = guestItems.stream()
@@ -170,10 +165,6 @@ public class CartItemService {
 				cartItemRepository.save(newItem);
 			}
 		}
-	}
-	
-	public CartItem getCartItemById(Long cartItemId) {
-		return cartItemRepository.findById(cartItemId).orElseThrow(() -> new DataNotFoundException("CartItem to get not found"));
 	}
 	
 	private Map<Long, BookListResponseRecord> fetchBooksInBulk(List<Long> bookIds) {
