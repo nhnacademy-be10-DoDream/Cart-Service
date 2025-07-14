@@ -112,6 +112,12 @@ public class GuestCartService {
 	}
 	
 	private GuestCartResponse buildGuestCartResponse(GuestCart cart) {
+		List<GuestCartItem> items = cart.getItems();
+		
+		if (items.isEmpty()) {
+			return new GuestCartResponse(cart.getGuestId(), Collections.emptyList());
+		}
+		
 		List<Long> bookIds = cart.getItems().stream()
 				                     .map(GuestCartItem::getBookId)
 				                     .collect(Collectors.toList());
