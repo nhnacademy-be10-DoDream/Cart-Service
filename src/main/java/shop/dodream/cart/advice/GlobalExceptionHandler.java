@@ -27,7 +27,7 @@ public class GlobalExceptionHandler {
 		return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
 	}
 	
-	@ExceptionHandler(InstantiationException.class)
+	@ExceptionHandler(InvalidQuantityException.class)
 	public ResponseEntity<String> handleInvalidation(InvalidQuantityException e){
 		return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
 	}
