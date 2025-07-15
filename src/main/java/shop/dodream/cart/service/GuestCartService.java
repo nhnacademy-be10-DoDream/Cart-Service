@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import shop.dodream.cart.client.BookClient;
 import shop.dodream.cart.dto.*;
 import shop.dodream.cart.exception.DataNotFoundException;
+import shop.dodream.cart.exception.InvalidQuantityException;
 
 import java.time.Duration;
 import java.util.*;
@@ -48,7 +49,7 @@ public class GuestCartService {
 			existing.get().setQuantity(newQuantity);
 		} else {
 			if (cart.getItems().size() >= MAX_ITEM_COUNT) {
-				throw new IllegalStateException("장바구니는 최대 " + MAX_ITEM_COUNT + "개까지만 담을 수 있습니다.");
+				throw new InvalidQuantityException("장바구니는 최대 " + MAX_ITEM_COUNT + "개까지만 담을 수 있습니다.");
 			}
 			long quantityToAdd = request.getQuantity();
 			if (quantityToAdd > MAX_ITEM_COUNT) {
@@ -75,7 +76,7 @@ public class GuestCartService {
 	
 	public GuestCartResponse updateQuantity(String guestId, Long bookId, Long newQuantity) {
 		if (newQuantity == null || newQuantity < 1 || newQuantity > MAX_ITEM_COUNT) {
-			throw new IllegalArgumentException("수량은 1~" + MAX_ITEM_COUNT + " 사이여야 합니다.");
+			throw new InvalidQuantityException("수량은 1~" + MAX_ITEM_COUNT + " 사이여야 합니다.");
 		}
 		
 		GuestCart cart = fetchCart(guestId);
@@ -143,10 +144,10 @@ public class GuestCartService {
 	
 	private void validateRequest(GuestCartItemRequest request) {
 		if (request.getQuantity() <= 0) {
-			throw new IllegalArgumentException("수량은 1개 이상이어야 합니다.");
+			throw new InvalidQuantityException("수량은 1개 이상이어야 합니다.");
 		}
 		if (request.getBookId() == null) {
-			throw new IllegalArgumentException("bookId는 null이 될 수 없습니다.");
+			throw new DataNotFoundException("bookId는 null이 될 수 없습니다.");
 		}
 	}
 	
