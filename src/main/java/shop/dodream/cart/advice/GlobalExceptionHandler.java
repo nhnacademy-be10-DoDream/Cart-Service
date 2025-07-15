@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import shop.dodream.cart.exception.DataNotFoundException;
 import shop.dodream.cart.exception.DuplicationException;
+import shop.dodream.cart.exception.InvalidQuantityException;
 import shop.dodream.cart.exception.MissingIdentifierException;
 
 @RestControllerAdvice
@@ -24,5 +25,10 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(DuplicationException.class)
 	public ResponseEntity<String> handleDuplication(DuplicationException e) {
 		return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
+	}
+	
+	@ExceptionHandler(InstantiationException.class)
+	public ResponseEntity<String> handleInvalidation(InvalidQuantityException e){
+		return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
 	}
 }
