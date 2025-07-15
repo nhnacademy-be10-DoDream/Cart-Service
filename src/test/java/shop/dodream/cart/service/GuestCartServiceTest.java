@@ -11,6 +11,7 @@ import org.springframework.data.redis.core.ValueOperations;
 import shop.dodream.cart.client.BookClient;
 import shop.dodream.cart.dto.*;
 import shop.dodream.cart.exception.DataNotFoundException;
+import shop.dodream.cart.exception.InvalidQuantityException;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -124,7 +125,7 @@ class GuestCartServiceTest {
 	void addCartItem_whenQuantityIsZero_throwsException() {
 		GuestCartItemRequest request = new GuestCartItemRequest(1L, 0L);
 		assertThatThrownBy(() -> guestCartService.addCartItem(guestId, request))
-				.isInstanceOf(IllegalArgumentException.class)
+				.isInstanceOf(InvalidQuantityException.class)
 				.hasMessage("수량은 1개 이상이어야 합니다.");
 	}
 	
@@ -133,7 +134,7 @@ class GuestCartServiceTest {
 	void addCartItem_whenBookIdIsNull_throwsException() {
 		GuestCartItemRequest request = new GuestCartItemRequest(null, 1L);
 		assertThatThrownBy(() -> guestCartService.addCartItem(guestId, request))
-				.isInstanceOf(IllegalArgumentException.class)
+				.isInstanceOf(DataNotFoundException.class)
 				.hasMessage("bookId는 null이 될 수 없습니다.");
 	}
 	
@@ -187,7 +188,7 @@ class GuestCartServiceTest {
 		
 		// when & then
 		assertThatThrownBy(() -> guestCartService.addCartItem(guestId, request))
-				.isInstanceOf(IllegalStateException.class)
+				.isInstanceOf(InvalidQuantityException.class)
 				.hasMessage("장바구니는 최대 20개까지만 담을 수 있습니다.");
 	}
 	
@@ -195,11 +196,11 @@ class GuestCartServiceTest {
 	@DisplayName("유효하지 않은 수량으로 요청 시 예외를 던진다")
 	void updateQuantity_withInvalidQuantity_throwsException() {
 		assertThatThrownBy(() -> guestCartService.updateQuantity(guestId, 1L, 0L))
-				.isInstanceOf(IllegalArgumentException.class);
+				.isInstanceOf(InvalidQuantityException.class);
 		assertThatThrownBy(() -> guestCartService.updateQuantity(guestId, 1L, 21L))
-				.isInstanceOf(IllegalArgumentException.class);
+				.isInstanceOf(InvalidQuantityException.class);
 		assertThatThrownBy(() -> guestCartService.updateQuantity(guestId, 1L, null))
-				.isInstanceOf(IllegalArgumentException.class);
+				.isInstanceOf(InvalidQuantityException.class);
 	}
 	
 	@Test
