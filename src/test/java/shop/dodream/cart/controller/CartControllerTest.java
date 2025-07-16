@@ -1,18 +1,17 @@
 package shop.dodream.cart.controller;
 
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.test.web.servlet.ResultActions;
 import shop.dodream.cart.dto.CartResponse;
 import shop.dodream.cart.dto.GuestCartResponse;
 import shop.dodream.cart.service.CartService;
@@ -23,147 +22,140 @@ import java.util.ArrayList;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@ExtendWith(MockitoExtension.class)
-@DisplayName("CartController 단위 테스트")
+@WebMvcTest(CartController.class)
 class CartControllerTest {
 	
-	@Mock
-	private CartService cartService;
-	
-	@Mock
-	private GuestCartService guestCartService;
-	
-	@Mock
-	private GuestIdUtil guestIdUtil;
-	
-	@InjectMocks
-	private CartController cartController;
-	
+	@Autowired
 	private MockMvc mockMvc;
 	
-	private final String guestId = "guest-123";
-	private final String userId = "user-abc";
-	private final Long cartId = 1L;
+	@MockBean
+	private CartService cartService;
+	
+	@MockBean
+	private GuestCartService guestCartService;
+	
+	@MockBean
+	private GuestIdUtil guestIdUtil;
+	
+	// 공통 테스트 데이터
+	private final String USER_ID = "user-123";
+	private final String GUEST_ID = "guest-abc-789";
+	private final Long CART_ID = 1L;
+	
+	private CartResponse cartResponse;
+	private GuestCartResponse guestCartResponse;
 	
 	@BeforeEach
 	void setUp() {
-		// 컨트롤러를 독립적으로 테스트하기 위해 standaloneSetup 사용
-		mockMvc = MockMvcBuilders.standaloneSetup(cartController).build();
+		// 공통 응답 객체 초기화
+		cartResponse = new CartResponse(CART_ID, USER_ID, new ArrayList<>());
+		guestCartResponse = new GuestCartResponse(GUEST_ID, new ArrayList<>());
 	}
 	
 	@Test
-	@DisplayName("성공 시 200 OK와 함께 장바구니 정보를 반환한다")
-	void getUserCart_success() throws Exception {
+	@DisplayName("[GET] 회원 장바구니 조회/생성 - 성공")
+	void getUserCart_Success() throws Exception {
 		// given
-		CartResponse cartResponse = new CartResponse(cartId, userId, new ArrayList<>());
-		given(cartService.getOrCreateUserCart(userId)).willReturn(cartResponse);
+		given(cartService.getOrCreateUserCart(USER_ID)).willReturn(cartResponse);
 		
-		// when & then
-		mockMvc.perform(get("/carts/users")
-				                .header("X-USER-ID", userId))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.userId").value(userId))
-				.andExpect(jsonPath("$.cartId").value(cartId));
+		// when
+		ResultActions resultActions = mockMvc.perform(get("/carts/users")
+				                                              .header("X-USER-ID", USER_ID));
 		
-		verify(cartService).getOrCreateUserCart(userId);
+		// then
+		resultActions.andExpect(status().isOk())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(jsonPath("$.cartId").value(CART_ID))
+				.andExpect(jsonPath("$.userId").value(USER_ID))
+				.andDo(print());
+		verify(cartService).getOrCreateUserCart(USER_ID);
 	}
 	
 	@Test
-	@DisplayName("GET /public/carts: 쿠키가 없을 경우, guestId를 생성하고 장바구니를 반환한다")
-	void getGuestCart_whenNoCookie_createsAndReturnsCart() throws Exception {
+	@DisplayName("[DELETE] 회원 장바구니 삭제 - 성공")
+	void deleteCart_Success() throws Exception {
 		// given
-		GuestCartResponse guestCartResponse = new GuestCartResponse(guestId, new ArrayList<>());
+		willDoNothing().given(cartService).deleteCart(CART_ID);
 		
-		given(guestIdUtil.getOrCreateGuestId(any(HttpServletRequest.class), any(HttpServletResponse.class)))
-				.willReturn(guestId);
-		given(guestCartService.getCart(guestId)).willReturn(guestCartResponse);
+		// when
+		ResultActions resultActions = mockMvc.perform(delete("/carts/{cartId}", CART_ID));
 		
-		// when & then
-		mockMvc.perform(get("/public/carts"))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.guestId").value(guestId));
+		// then
+		resultActions.andExpect(status().isNoContent())
+				.andDo(print());
+		verify(cartService).deleteCart(CART_ID);
+	}
+	
+	@Test
+	@DisplayName("[GET] 비회원 장바구니 조회/생성 (guestId 없음) - 성공")
+	void getGuestCart_WithoutGuestId_Success() throws Exception {
+		// given
+		// guestIdUtil이 특정 guestId를 반환하도록 설정
+		given(guestIdUtil.getOrCreateGuestId(any(HttpServletRequest.class), any(HttpServletResponse.class))).willReturn(GUEST_ID);
+		given(guestCartService.getCart(GUEST_ID)).willReturn(guestCartResponse);
 		
+		// when
+		ResultActions resultActions = mockMvc.perform(get("/public/carts"));
+		
+		// then
+		resultActions.andExpect(status().isOk())
+				.andExpect(jsonPath("$.guestId").value(GUEST_ID))
+				.andDo(print());
 		verify(guestIdUtil).getOrCreateGuestId(any(HttpServletRequest.class), any(HttpServletResponse.class));
-		verify(guestCartService).getCart(guestId);
+		verify(guestCartService).getCart(GUEST_ID);
 	}
 	
 	@Test
-	@DisplayName("GET /public/carts: 쿠키가 있을 경우, 기존 guestId를 사용하여 장바구니를 반환한다")
-	void getGuestCart_whenCookieExists_returnsCart() throws Exception {
+	@DisplayName("[GET] 비회원 장바구니 조회 (guestId 있음) - 성공")
+	void getGuestCart_WithGuestId_Success() throws Exception {
 		// given
-		GuestCartResponse guestCartResponse = new GuestCartResponse(guestId, new ArrayList<>());
-		given(guestIdUtil.getOrCreateGuestId(any(HttpServletRequest.class), any(HttpServletResponse.class)))
-				.willReturn(guestId);
-		given(guestCartService.getCart(guestId)).willReturn(guestCartResponse);
+		given(guestCartService.getCart(GUEST_ID)).willReturn(guestCartResponse);
 		
-		// when & then
-		mockMvc.perform(get("/public/carts")
-				                .cookie(new Cookie("guestId", guestId)))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.guestId").value(guestId));
+		// when
+		ResultActions resultActions = mockMvc.perform(get("/public/carts/{guestId}", GUEST_ID));
 		
-		verify(guestIdUtil).getOrCreateGuestId(any(HttpServletRequest.class), any(HttpServletResponse.class));
-		verify(guestCartService).getCart(guestId);
+		// then
+		resultActions.andExpect(status().isOk())
+				.andExpect(jsonPath("$.guestId").value(GUEST_ID))
+				.andDo(print());
+		verify(guestCartService).getCart(GUEST_ID);
 	}
 	
 	@Test
-	@DisplayName("GET /public/carts/{guestId}: 경로 변수로 주어진 guestId로 장바구니를 반환한다")
-	void getGuestCart_withPathVariable_returnsCart() throws Exception {
+	@DisplayName("[DELETE] 비회원 장바구니 삭제 - 성공")
+	void deleteGuestCart_Success() throws Exception {
 		// given
-		GuestCartResponse guestCartResponse = new GuestCartResponse(guestId, new ArrayList<>());
-		given(guestCartService.getCart(guestId)).willReturn(guestCartResponse);
+		willDoNothing().given(guestCartService).deleteCart(GUEST_ID);
 		
-		// when & then
-		mockMvc.perform(get("/public/carts/{guestId}", guestId))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.guestId").value(guestId));
+		// when
+		ResultActions resultActions = mockMvc.perform(delete("/public/carts/{guestId}", GUEST_ID));
 		
-		verify(guestCartService).getCart(guestId);
+		// then
+		resultActions.andExpect(status().isNoContent())
+				.andDo(print());
+		verify(guestCartService).deleteCart(GUEST_ID);
 	}
 	
 	@Test
-	@DisplayName("DELETE /carts/{cartId}: 회원 장바구니를 성공적으로 삭제하고 204 No Content를 반환한다")
-	void deleteCart_success() throws Exception {
+	@DisplayName("[POST] 비회원 장바구니를 회원 장바구니로 병합 - 성공")
+	void mergeCart_Success() throws Exception {
 		// given
-		doNothing().when(cartService).deleteCart(cartId);
+		willDoNothing().given(cartService).mergeCartOnLogin(USER_ID, GUEST_ID);
 		
-		// when & then
-		mockMvc.perform(delete("/carts/{cartId}", cartId))
-				.andExpect(status().isNoContent());
+		// when
+		ResultActions resultActions = mockMvc.perform(post("/carts/merge/{guestId}", GUEST_ID)
+				                                              .header("X-USER-ID", USER_ID));
 		
-		verify(cartService).deleteCart(cartId);
-	}
-	
-	@Test
-	@DisplayName("DELETE /public/carts/{guestId}: 비회원 장바구니를 성공적으로 삭제하고 204 No Content를 반환한다")
-	void deleteGuestCart_success() throws Exception {
-		// given
-		doNothing().when(guestCartService).deleteCart(guestId);
-		
-		// when & then
-		mockMvc.perform(delete("/public/carts/{guestId}", guestId))
-				.andExpect(status().isNoContent());
-		
-		verify(guestCartService).deleteCart(guestId);
-	}
-	
-	@Test
-	@DisplayName("성공적으로 장바구니를 병합하고 200 OK를 반환한다")
-	void mergeCart_success() throws Exception {
-		// given
-		doNothing().when(cartService).mergeCartOnLogin(userId, guestId);
-		
-		// when & then
-		mockMvc.perform(post("/carts/merge/{guestId}", guestId)
-				                .header("X-USER-ID", userId))
-				.andExpect(status().isOk());
-		
-		verify(cartService).mergeCartOnLogin(userId, guestId);
+		// then
+		resultActions.andExpect(status().isOk()) // 본문이 없는 200 OK
+				.andDo(print());
+		verify(cartService).mergeCartOnLogin(USER_ID, GUEST_ID);
 	}
 	
 }
