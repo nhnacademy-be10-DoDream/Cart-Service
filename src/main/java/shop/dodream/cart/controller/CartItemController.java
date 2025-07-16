@@ -78,6 +78,7 @@ public class CartItemController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 	
+	@Operation(summary = "비회원 장바구니 수량 변경",description = "비회원 장바구니의 수량을 변경합니다.")
 	@PutMapping("/public/carts/{guestId}/quantity")
 	public ResponseEntity<GuestCartResponse> updateGuestCartItemQuantity(@PathVariable String guestId, @RequestBody @Valid GuestCartItemRequest request) {
 		GuestCartResponse response = guestCartService.updateQuantity(guestId,request.getBookId(),request.getQuantity());
