@@ -30,6 +30,7 @@ public class CartItem {
 	@OnDelete(action = OnDeleteAction.CASCADE)
 	private Cart cart;
 	//정가
+	@NotNull
 	private Long salePrice;
 
 	public CartItem(Cart cart, Long bookId) {

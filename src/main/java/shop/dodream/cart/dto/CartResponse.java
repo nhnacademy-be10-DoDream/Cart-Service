@@ -1,17 +1,20 @@
 package shop.dodream.cart.dto;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import shop.dodream.cart.entity.Cart;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CartResponse {
+public class CartResponse implements Serializable {
+	@NotNull
 	private Long cartId;
 	private String userId;
 	private List<CartItemResponse> items;
