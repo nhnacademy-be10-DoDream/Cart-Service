@@ -14,7 +14,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CartResponse implements Serializable {
-	@NotNull
 	private Long cartId;
 	private String userId;
 	private List<CartItemResponse> items;
