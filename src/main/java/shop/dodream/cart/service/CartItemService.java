@@ -16,6 +16,7 @@ import shop.dodream.cart.repository.CartRepository;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -103,7 +104,9 @@ public class CartItemService {
 		if (book == null) {
 			throw new DataNotFoundException("도서를 찾을 수 없습니다: id=" + item.getBookId());
 		}
-		
+		Cart cart = cartRepository.findById(cartId)
+				            .orElseThrow(() -> new DataNotFoundException("Cart not found: id=" + cartId));
+		item.setCart(cart);
 		item.setQuantity(quantity);
 		item.setSalePrice(book.getSalePrice()); // 가격 정보도 최신 데이터로 업데이트
 		CartItem updated = cartItemRepository.save(item);
