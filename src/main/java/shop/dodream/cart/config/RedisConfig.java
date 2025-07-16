@@ -1,5 +1,8 @@
 package shop.dodream.cart.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -28,21 +31,34 @@ public class RedisConfig {
 	
 	@Bean
 	public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-		// 1. 기본 캐시 설정: 10분 TTL, Null 값 캐싱 안함
-		RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
-				                                        .entryTtl(Duration.ofMinutes(10)) // 기본 TTL 10분
-				                                        .disableCachingNullValues() // Null 값은 캐시하지 않음
-				                                        .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-				                                        .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()));
+		// ObjectMapper를 커스터마이징하여 타입 정보를 포함하도록 설정합니다.
+		// 이것이 오류 해결의 핵심입니다.
+		PolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
+				                               .allowIfBaseType(Object.class)
+				                               .build();
 		
-		// 2. 특정 캐시 그룹을 위한 설정: 'cart' 캐시는 30분 TTL
+		ObjectMapper objectMapper = new ObjectMapper();
+		objectMapper.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.NON_FINAL);
+		
+		// 커스터마이징된 ObjectMapper를 사용하는 새로운 Serializer 생성
+		GenericJackson2JsonRedisSerializer redisSerializer = new GenericJackson2JsonRedisSerializer(objectMapper);
+		
+		// 1. 기본 캐시 설정
+		RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
+				                                        .entryTtl(Duration.ofMinutes(10))
+				                                        .disableCachingNullValues()
+				                                        .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
+				                                        // 수정한 Serializer를 값(value) 직렬화에 사용합니다.
+				                                        .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(redisSerializer));
+		
+		// 2. 특정 캐시 그룹을 위한 설정
 		Map<String, RedisCacheConfiguration> cacheConfigurations = Map.of(
-				"cart", defaultConfig.entryTtl(Duration.ofMinutes(30)) // 'cart' 캐시는 30분
+				"cart", defaultConfig.entryTtl(Duration.ofMinutes(30))
 		);
 		
 		return RedisCacheManager.builder(connectionFactory)
-				       .cacheDefaults(defaultConfig) // 3. 기본 설정을 적용
-				       .withInitialCacheConfigurations(cacheConfigurations) // 4. 특정 캐시 설정을 적용
+				       .cacheDefaults(defaultConfig)
+				       .withInitialCacheConfigurations(cacheConfigurations)
 				       .build();
 	}
 }
