@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class GuestCartItem {
-	@NotNull
 	private Long bookId;
 	@NotNull
 	@Min(1)
