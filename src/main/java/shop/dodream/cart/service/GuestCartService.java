@@ -66,7 +66,7 @@ public class GuestCartService {
 		GuestCart cart = fetchCart(guestId);
 		cart.setItems(cart.getItems().stream()
 				              .filter(item -> !item.getBookId().equals(bookId))
-				              .collect(Collectors.toList()));
+						              .toList());
 		saveCart(guestId, cart);
 	}
 	
@@ -121,7 +121,7 @@ public class GuestCartService {
 		
 		List<Long> bookIds = cart.getItems().stream()
 				                     .map(GuestCartItem::getBookId)
-				                     .collect(Collectors.toList());
+				                     .toList();
 		
 		Map<Long, BookListResponseRecord> bookMap = new HashMap<>();
 		try {

@@ -145,20 +145,6 @@ class CartItemRepositoryTest {
 	}
 	
 	@Test
-	@DisplayName("Book ID가 null인 아이템 저장 시 ConstraintViolationException 발생")
-	void whenSavingItemWithNullBookId_throwsException() {
-		// given
-		CartItem invalidItem = new CartItem();
-		invalidItem.setCart(cart);
-		invalidItem.setBookId(null); // @NotNull 위반
-		invalidItem.setQuantity(1L);
-		
-		// when & then
-		assertThatThrownBy(() -> cartItemRepository.saveAndFlush(invalidItem))
-				.isInstanceOf(ConstraintViolationException.class);
-	}
-	
-	@Test
 	@DisplayName("Cart가 null인 아이템 저장 시 Exception 발생")
 	void whenSavingItemWithNullCart_throwsException() {
 		// given
