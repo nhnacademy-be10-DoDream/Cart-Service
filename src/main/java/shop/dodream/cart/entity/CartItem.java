@@ -22,7 +22,6 @@ public class CartItem {
 	@Min(1)
 	private Long quantity;
 	//도서고유ID
-	@NotNull
 	private Long bookId;
 	//카트고유ID
 	@ManyToOne
@@ -30,7 +29,6 @@ public class CartItem {
 	@OnDelete(action = OnDeleteAction.CASCADE)
 	private Cart cart;
 	//정가
-	@NotNull
 	private Long salePrice;
 
 	public CartItem(Cart cart, Long bookId) {
