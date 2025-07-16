@@ -40,16 +40,8 @@ public class CartItemController {
 	@PutMapping("/carts/{cartId}/cart-items/{cartItemId}/quantity")
 	public ResponseEntity<CartItemResponse> updateCartItemQuantity(@RequestBody @Valid CartItemRequest request,
 	                                                               @PathVariable Long cartItemId, @PathVariable Long cartId) {
-		CartItemResponse response = cartItemService.updateCartItemQuantity(cartItemId, request.getQuantity());
+		CartItemResponse response = cartItemService.updateCartItemQuantity(cartId,cartItemId, request.getQuantity());
 		return ResponseEntity.ok(response);
-	}
-	
-	// 장바구니 아이템 하나 삭제
-	@Operation(summary = "장바구니 항목 삭제", description = "장바구니의 항목 단건 삭제합니다.")
-	@DeleteMapping("/carts/{cartId}/cart-items/{cartItemId}")
-	public ResponseEntity<Void> removeCartItem(@PathVariable Long cartItemId) {
-		cartItemService.removeCartItem(cartItemId);
-		return ResponseEntity.noContent().build();
 	}
 	
 	// 특정 장바구니의 전체 아이템 삭제
