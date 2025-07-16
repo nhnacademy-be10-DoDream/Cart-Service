@@ -10,12 +10,16 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class GuestCartItemResponse {
+	@NotNull
 	private Long bookId;
+	@NotNull
 	private String title;
 	@NotNull
 	@Min(1)
 	private Long quantity;
+	@NotNull
 	private Long salePrice;
+	@NotNull
 	private String bookUrl;
 	
 	
