@@ -1,12 +1,14 @@
 package shop.dodream.cart.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import shop.dodream.cart.entity.CartItem;
 
 
 
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 public class CartItemResponse {
 	private Long cartItemId;
