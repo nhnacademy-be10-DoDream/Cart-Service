@@ -12,7 +12,6 @@ import org.hibernate.annotations.OnDeleteAction;
 @Entity
 @Getter
 @Setter
-@EqualsAndHashCode
 public class CartItem {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,10 +29,5 @@ public class CartItem {
 	private Cart cart;
 	//정가
 	private Long salePrice;
-
-	public CartItem(Cart cart, Long bookId) {
-		this.cart = cart;
-		this.bookId = bookId;
-	}
 }
 
