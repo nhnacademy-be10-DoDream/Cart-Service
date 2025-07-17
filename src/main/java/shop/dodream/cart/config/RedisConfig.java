@@ -28,37 +28,4 @@ public class RedisConfig {
 		template.setValueSerializer(new Jackson2JsonRedisSerializer<>(GuestCart.class));
 		return template;
 	}
-	
-	@Bean
-	public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-		// ObjectMapper를 커스터마이징하여 타입 정보를 포함하도록 설정합니다.
-		// 이것이 오류 해결의 핵심입니다.
-		PolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
-				                               .allowIfBaseType(Object.class)
-				                               .build();
-		
-		ObjectMapper objectMapper = new ObjectMapper();
-		objectMapper.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.NON_FINAL);
-		
-		// 커스터마이징된 ObjectMapper를 사용하는 새로운 Serializer 생성
-		GenericJackson2JsonRedisSerializer redisSerializer = new GenericJackson2JsonRedisSerializer(objectMapper);
-		
-		// 1. 기본 캐시 설정
-		RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
-				                                        .entryTtl(Duration.ofMinutes(10))
-				                                        .disableCachingNullValues()
-				                                        .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-				                                        // 수정한 Serializer를 값(value) 직렬화에 사용합니다.
-				                                        .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(redisSerializer));
-		
-		// 2. 특정 캐시 그룹을 위한 설정
-		Map<String, RedisCacheConfiguration> cacheConfigurations = Map.of(
-				"cart", defaultConfig.entryTtl(Duration.ofMinutes(30))
-		);
-		
-		return RedisCacheManager.builder(connectionFactory)
-				       .cacheDefaults(defaultConfig)
-				       .withInitialCacheConfigurations(cacheConfigurations)
-				       .build();
-	}
 }
