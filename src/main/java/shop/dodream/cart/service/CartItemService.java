@@ -53,7 +53,7 @@ public class CartItemService {
 					       }
 					       return CartItemResponse.of(item, book);
 				       })
-				       .toList();
+				       .collect(Collectors.toList());
 	}
 	
 	@CacheEvict(value = "cart",key="#request.getCartId()")
