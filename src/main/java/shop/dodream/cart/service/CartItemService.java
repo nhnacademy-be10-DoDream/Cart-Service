@@ -38,7 +38,7 @@ public class CartItemService {
 		List<Long> bookIds = items.stream()
 				                     .map(CartItem::getBookId)
 				                     .distinct()
-				                     .toList();
+				                     .collect(Collectors.toList());
 		
 		List<BookListResponseRecord> books = bookClient.getBooksByIds(bookIds);
 		
