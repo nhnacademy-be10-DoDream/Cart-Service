@@ -4,11 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import shop.dodream.cart.entity.CartItem;
 
-import java.io.Serializable;
+
 
 @Data
 @AllArgsConstructor
-public class CartItemResponse implements Serializable {
+public class CartItemResponse {
 	private Long cartItemId;
 	private Long bookId;
 	private String title;
