@@ -12,7 +12,6 @@ import lombok.*;
 @AllArgsConstructor
 @Getter
 @Setter
-@EqualsAndHashCode
 public class Cart {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
