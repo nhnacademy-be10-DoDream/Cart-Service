@@ -26,7 +26,7 @@ public class CartItemService {
 	private final BookClient bookClient;
 	private final CartRepository cartRepository;
 	
-	@Cacheable(value = "cart",key = "#cartId")
+
 	@Transactional(readOnly = true)
 	public List<CartItemResponse> getCartItems(Long cartId) {
 		List<CartItem> items = cartItemRepository.findByCart_CartId(cartId);
@@ -56,7 +56,6 @@ public class CartItemService {
 				       .collect(Collectors.toList());
 	}
 	
-	@CacheEvict(value = "cart",key="#request.getCartId()")
 	@Transactional
 	public CartItemResponse addCartItem(CartItemRequest request) {
 		Cart cart = cartRepository.findById(request.getCartId())
@@ -90,7 +89,6 @@ public class CartItemService {
 		return CartItemResponse.of(savedItem, book);
 	}
 	
-	@CacheEvict(value = "cart", key = "#cartId")
 	@Transactional
 	public CartItemResponse updateCartItemQuantity(Long cartId,Long cartItemId, Long quantity) {
 		CartItem item = cartItemRepository.findById(cartItemId)
@@ -113,7 +111,6 @@ public class CartItemService {
 		return CartItemResponse.of(updated, book);
 	}
 	
-	@CacheEvict(value = "cart",key = "#cartId")
 	@Transactional
 	public void removeAllCartItems(Long cartId) {
 		List<CartItem> items = cartItemRepository.findByCart_CartId(cartId);
@@ -123,7 +120,6 @@ public class CartItemService {
 		cartItemRepository.deleteByCart_CartId(cartId);
 	}
 	
-	@CacheEvict(value = "cart", key = "#cartId")
 	@Transactional
 	public void removeCartItemByBookId(Long cartId, Long bookId) {
 		CartItem item = cartItemRepository.findByCart_CartIdAndBookId(cartId, bookId);
