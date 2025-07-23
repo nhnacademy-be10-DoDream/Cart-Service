@@ -1,6 +1,7 @@
 package shop.dodream.cart.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "CartItem",description = "장바구니 항목 관련 API")
 public class CartItemController {
 	private final CartItemService cartItemService;
 	private final GuestCartService guestCartService;

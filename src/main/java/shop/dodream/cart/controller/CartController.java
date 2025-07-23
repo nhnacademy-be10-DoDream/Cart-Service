@@ -1,6 +1,7 @@
 package shop.dodream.cart.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import shop.dodream.cart.util.GuestIdUtil;
 
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "Cart", description = "장바구니 관련 API")
 public class CartController {
 	
 	private final CartService cartService;
